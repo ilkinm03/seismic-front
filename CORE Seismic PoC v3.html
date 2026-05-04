@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CORE Seismic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#ffffff;
+  --bg1:#fafafa;
+  --bg2:#f4f4f5;
+  --bg3:#efefef;
+  --bg4:#e4e4e7;
+  --line:#e4e4e7;
+  --line2:#d4d4d8;
+  --t1:#09090b;
+  --t2:#52525b;
+  --t3:#a1a1aa;
+  --t4:#d4d4d8;
+  --red:#dc2626;
+  --red-bg:rgba(220,38,38,0.07);
+  --amber:#b45309;
+  --amber-bg:rgba(180,83,9,0.07);
+  --blue:#2563eb;
+  --blue-bg:rgba(37,99,235,0.07);
+  --green:#16a34a;
+  --green-bg:rgba(22,163,74,0.07);
+  --r:8px;
+  --sans:'Geist',-apple-system,sans-serif;
+  --mono:'Geist Mono',monospace;
+}
+html,body,#root{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:var(--sans);font-size:13px;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px;}
+
+/* Leaflet */
+.leaflet-container{background:#e0e0e0!important;}
+.leaflet-tile{filter:grayscale(1) contrast(0.8) brightness(1.12);}
+.leaflet-control-zoom{border:1px solid var(--line)!important;border-radius:var(--r)!important;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)!important;}
+.leaflet-control-zoom a{background:#fff!important;color:var(--t1)!important;border-color:var(--line)!important;width:28px!important;height:28px!important;line-height:28px!important;font-size:16px!important;}
+.leaflet-control-zoom a:hover{background:var(--bg2)!important;}
+.leaflet-control-attribution{display:none!important;}
+/* Rich popup */
+.core-tip .leaflet-popup-content-wrapper{border-radius:12px!important;padding:0!important;overflow:hidden!important;border:1px solid #e4e4e7!important;box-shadow:0 8px 28px rgba(0,0,0,.12)!important;}
+.core-tip .leaflet-popup-content{margin:0!important;line-height:1!important;}
+.core-tip .leaflet-popup-tip-container{display:none!important;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes shimmer{from{background-position:-600px 0;}to{background-position:600px 0;}}
+
+.skel{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:600px 100%;animation:shimmer 1.6s infinite;border-radius:4px;}
+.fade-up{animation:fadeUp .28s cubic-bezier(.16,1,.3,1) both;}
+.slide-left{animation:slideLeft .32s cubic-bezier(.16,1,.3,1) both;}
+
+#twk{position:fixed;bottom:20px;right:20px;z-index:9999;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;width:220px;box-shadow:0 8px 28px rgba(0,0,0,.1);display:none;}
+#twk.on{display:block;animation:fadeUp .2s ease;}
+#twk label{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:9px;cursor:pointer;}
+#twk input[type=checkbox]{accent-color:var(--t1);cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<div id="twk">
+  <p style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:13px;">Tweaks</p>
+  <label>Map grayscale<input type="checkbox" id="tw-gray" checked/></label>
+  <label>Show SWD wells<input type="checkbox" id="tw-wells" checked/></label>
+  <label>Show radius ring<input type="checkbox" id="tw-radius" checked/></label>
+</div>
+
+<script type="text/babel">
+const {useState,useEffect,useRef} = React;
+
+const EVENTS = [
+  {id:"EV-2024-0831",date:"Aug 31, 2024",time:"14:22:07",lat:31.832,lng:-103.412,mag:3.8,depth:5.2,location:"Reeves County",state:"TX"},
+  {id:"EV-2024-0829",date:"Aug 29, 2024",time:"09:44:51",lat:31.621,lng:-103.891,mag:2.9,depth:3.8,location:"Culberson County",state:"TX"},
+  {id:"EV-2024-0827",date:"Aug 27, 2024",time:"22:11:33",lat:31.965,lng:-102.953,mag:4.1,depth:7.1,location:"Pecos County",state:"TX"},
+  {id:"EV-2024-0825",date:"Aug 25, 2024",time:"03:58:19",lat:32.104,lng:-103.244,mag:2.4,depth:4.5,location:"Ward County",state:"TX"},
+  {id:"EV-2024-0822",date:"Aug 22, 2024",time:"18:30:02",lat:31.743,lng:-102.677,mag:3.2,depth:6.0,location:"Midland Basin",state:"TX"},
+  {id:"EV-2024-0819",date:"Aug 19, 2024",time:"11:05:44",lat:32.287,lng:-103.655,mag:2.1,depth:2.9,location:"Eddy Adjacent",state:"TX"},
+  {id:"EV-2024-0815",date:"Aug 15, 2024",time:"07:17:28",lat:31.505,lng:-103.120,mag:3.5,depth:5.8,location:"Reeves County",state:"TX"},
+];
+
+const WELLS = [
+  {lat:31.855,lng:-103.440,vol:42000,op:"Pioneer Natural Resources"},
+  {lat:31.798,lng:-103.381,vol:31500,op:"Diamondback Energy"},
+  {lat:31.612,lng:-103.870,vol:28000,op:"ConocoPhillips"},
+  {lat:31.980,lng:-102.920,vol:55000,op:"Devon Energy"},
+  {lat:32.110,lng:-103.260,vol:19000,op:"Coterra Energy"},
+];
+
+const magColor = m => m>=4?'#dc2626':m>=3?'#b45309':'#2563eb';
+const magLabel = m => m>=4
+  ? {l:'High',    c:'#dc2626', bg:'rgba(220,38,38,.08)',   br:'rgba(220,38,38,.22)'}
+  : m>=3
+  ? {l:'Mod',     c:'#b45309', bg:'rgba(180,83,9,.08)',    br:'rgba(180,83,9,.22)'}
+  : {l:'Low',     c:'#2563eb', bg:'rgba(37,99,235,.08)',   br:'rgba(37,99,235,.22)'};
+
+function buildResult(ev) {
+  const nearby = WELLS.filter(w => Math.sqrt((w.lat-ev.lat)**2+(w.lng-ev.lng)**2)*111 <= 10);
+  const conf = ev.mag>=4 ? 79 : 87;
+  const levelColor = conf>=75?'#16a34a':conf>=55?'#b45309':'#dc2626';
+  const levelBg    = conf>=75?'rgba(22,163,74,.08)':conf>=55?'rgba(180,83,9,.08)':'rgba(220,38,38,.08)';
+  const levelBr    = conf>=75?'rgba(22,163,74,.22)':conf>=55?'rgba(180,83,9,.22)':'rgba(220,38,38,.22)';
+  return {
+    driver: ev.mag>=4 ? "Fault Reactivation via Induced Stress" : "Saltwater Disposal (SWD) Well Pressure",
+    conf, levelColor, levelBg, levelBr,
+    levelLabel: conf>=75?'High Confidence':conf>=55?'Moderate':'Low Confidence',
+    explanation: ev.mag>=4
+      ? `Basement fault reactivation driven by cumulative pore pressure increase. Two mapped fault segments intersect within 2.5 km of the hypocenter. The M${ev.mag} event at ${ev.depth} km depth is consistent with induced seismicity patterns documented across the Permian Basin.`
+      : `Elevated pore pressure propagation from ${nearby.length} high-volume SWD operations within a 10 km radius. The M${ev.mag} event at ${ev.depth} km depth is consistent with induced seismicity patterns documented across the Delaware/Midland Basin literature.`,
+    nearby,
+    signals:[
+      {k:"Nearest SWD distance",   v:"2.3 km",               flag:true},
+      {k:"Active wells in radius",  v:`${nearby.length} wells`, flag:nearby.length>=2},
+      {k:"90-day injection vol.",   v:"3.47M bbl",            flag:true},
+      {k:"Volume trend (30d)",      v:"+23% above baseline",  flag:true},
+      {k:"Focal depth",             v:`${ev.depth} km`,       flag:ev.depth<6},
+      {k:"Fault proximity",         v:"1.8 km (mapped)",      flag:true},
+    ],
+    alt:"Hydraulic Fracturing (HF)",
+    altConf: ev.mag>=4?17:9,
+  };
+}
+
+// ─── Primitives ───────────────────────────────────────────────────────────────
+const Dot = ({on,color='#16a34a'}) => (
+  <span style={{width:6,height:6,borderRadius:'50%',flexShrink:0,display:'inline-block',
+    background:on?color:'var(--t4)',boxShadow:on?`0 0 0 2px ${color}28`:''}}/>
+);
+const Pill = ({c,bg,br,children,small}) => (
+  <span style={{display:'inline-flex',alignItems:'center',padding:small?'2px 7px':'3px 9px',
+    borderRadius:20,fontSize:small?10:11,fontWeight:500,background:bg,color:c,
+    border:`1px solid ${br}`,whiteSpace:'nowrap'}}>{children}</span>
+);
+const Spinner = ({sz=14}) => (
+  <div style={{width:sz,height:sz,borderRadius:'50%',border:'1.5px solid var(--line2)',
+    borderTop:'1.5px solid var(--t2)',animation:'spin .65s linear infinite',flexShrink:0}}/>
+);
+const Sep = () => <div style={{height:1,background:'var(--line)',flexShrink:0}}/>;
+
+// ─── Topbar ───────────────────────────────────────────────────────────────────
+function Topbar({n}) {
+  const [ts,setTs]=useState(new Date().toLocaleTimeString('en-US',{hour12:false}));
+  useEffect(()=>{const t=setInterval(()=>setTs(new Date().toLocaleTimeString('en-US',{hour12:false})),1000);return()=>clearInterval(t);},[]);
+  return (
+    <div style={{height:52,background:'#fff',borderBottom:'1px solid var(--line)',
+      display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 20px',flexShrink:0}}>
+      {/* Brand */}
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <div style={{width:30,height:30,borderRadius:8,background:'var(--t1)',
+          display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <path d="M2 12h3l3-8 4 16 3-10 2 2h5" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div style={{fontWeight:700,fontSize:14,letterSpacing:'-0.03em',lineHeight:1.15}}>CORE Seismic</div>
+          <div style={{fontSize:10,color:'var(--t3)',letterSpacing:'0.02em'}}>Induced Seismicity Platform</div>
+        </div>
+        <div style={{height:22,width:1,background:'var(--line)',margin:'0 4px'}}/>
+        <span style={{fontSize:10,fontWeight:600,padding:'3px 8px',borderRadius:4,
+          background:'var(--bg2)',color:'var(--t3)',border:'1px solid var(--line2)',
+          letterSpacing:'0.08em',fontFamily:'var(--mono)'}}>PoC v2.1</span>
+      </div>
+      {/* Center stats */}
+      <div style={{display:'flex',alignItems:'center',gap:2}}>
+        {[
+          {k:'REGION', v:'West Texas · Permian', icon:<Dot on/>},
+          {k:'EVENTS',  v:`${n} loaded`,         icon:null},
+          {k:'DATA',    v:'Public · TX RRC',      icon:null},
+        ].map(({k,v,icon},i)=>(
+          <React.Fragment key={k}>
+            {i>0&&<div style={{width:1,height:18,background:'var(--line)',margin:'0 6px'}}/>}
+            <div style={{padding:'3px 12px',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+              <span style={{fontSize:9,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.1em'}}>{k}</span>
+              <div style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'var(--t2)',fontWeight:500}}>{icon}{v}</div>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+      {/* Right */}
+      <div style={{display:'flex',alignItems:'center',gap:16}}>
+        <div style={{display:'flex',alignItems:'center',gap:5}}>
+          <Dot on color='#16a34a'/>
+          <span style={{fontSize:11,color:'var(--t3)'}}>Engine online</span>
+        </div>
+        <span style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--t4)'}}>{ts} UTC</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Event List ───────────────────────────────────────────────────────────────
+function EventList({events,selectedId,onSelect,disabled}) {
+  const [q,setQ]=useState('');
+  const list=events.filter(e=>e.location.toLowerCase().includes(q.toLowerCase())||e.id.includes(q));
+  return (
+    <div style={{width:265,borderRight:'1px solid var(--line)',display:'flex',flexDirection:'column',background:'#fff',flexShrink:0}}>
+      <div style={{padding:'13px 13px 10px',flexShrink:0}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:9}}>
+          <span style={{fontSize:10,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.1em'}}>Seismic Events</span>
+          <span style={{fontSize:10,fontFamily:'var(--mono)',color:'var(--t3)',
+            background:'var(--bg2)',padding:'1px 7px',borderRadius:10,border:'1px solid var(--line)'}}>{list.length}</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:7,background:'var(--bg1)',
+          border:'1px solid var(--line)',borderRadius:7,padding:'6px 10px'}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search events…"
+            style={{background:'none',border:'none',outline:'none',color:'var(--t1)',fontSize:12,width:'100%',fontFamily:'var(--sans)'}}/>
+          {q&&<button onClick={()=>setQ('')} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>×</button>}
+        </div>
+      </div>
+      <Sep/>
+      <div style={{flex:1,overflowY:'auto'}}>
+        {list.map(ev=>{
+          const b=magLabel(ev.mag), sel=ev.id===selectedId;
+          return (
+            <button key={ev.id} onClick={()=>!disabled&&onSelect(ev.id)}
+              style={{width:'100%',textAlign:'left',padding:'10px 13px',background:sel?'var(--bg2)':'transparent',
+                border:'none',borderBottom:'1px solid var(--line)',
+                borderLeft:`2px solid ${sel?b.c:'transparent'}`,
+                cursor:disabled&&!sel?'not-allowed':'pointer',
+                opacity:disabled&&!sel?.35:1,transition:'background .12s'}}
+              onMouseEnter={e=>{if(!sel&&!disabled)e.currentTarget.style.background='var(--bg1)';}}
+              onMouseLeave={e=>{if(!sel)e.currentTarget.style.background='transparent';}}
+            >
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                <span style={{fontFamily:'var(--mono)',fontSize:10,color:sel?b.c:'var(--t3)',fontWeight:500,letterSpacing:'.02em'}}>{ev.id}</span>
+                <span style={{fontSize:11,fontWeight:700,color:b.c,background:b.bg,border:`1px solid ${b.br}`,padding:'1px 6px',borderRadius:4}}>M{ev.mag}</span>
+              </div>
+              <p style={{fontWeight:500,fontSize:12,color:sel?'var(--t1)':'var(--t2)',marginBottom:2,letterSpacing:'-.01em'}}>{ev.location}, {ev.state}</p>
+              <div style={{display:'flex',alignItems:'center',gap:7,fontSize:10,color:'var(--t3)'}}>
+                <span>{ev.date}</span>
+                <span style={{width:2,height:2,borderRadius:'50%',background:'var(--t4)',display:'inline-block'}}/>
+                <span>{ev.depth} km</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <Sep/>
+      <div style={{padding:'8px 13px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span style={{fontSize:10,color:'var(--t3)'}}>30-day window</span>
+        <div style={{display:'flex',gap:5}}>
+          <Pill c='var(--red)' bg='var(--red-bg)' br='rgba(220,38,38,.2)' small>{events.filter(e=>e.mag>=4).length} high</Pill>
+          <Pill c='var(--amber)' bg='var(--amber-bg)' br='rgba(180,83,9,.2)' small>{events.filter(e=>e.mag>=3&&e.mag<4).length} mod</Pill>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Map ──────────────────────────────────────────────────────────────────────
+function MapView({events,selectedId,onSelect,showWells,showRadius}) {
+  const ref=useRef(null);
+  const mapRef=useRef(null);
+  const mkRef=useRef({});
+  const wellRef=useRef([]);
+  const circleRef=useRef(null);
+
+  useEffect(()=>{
+    if(mapRef.current)return;
+    const map=L.map(ref.current,{center:[31.85,-103.2],zoom:8,zoomControl:true,attributionControl:false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    mapRef.current=map;
+  },[]);
+
+  useEffect(()=>{
+    if(!mapRef.current)return;
+    const map=mapRef.current;
+    Object.values(mkRef.current).forEach(m=>map.removeLayer(m));
+    mkRef.current={};
+
+    events.forEach(ev=>{
+      const sel=ev.id===selectedId;
+      const c=magColor(ev.mag);
+      const tier=ev.mag>=4?3:ev.mag>=3?2:1;
+      const outerR=7+tier*4;
+      const innerR=4+tier*1.8;
+
+      // Clean SVG marker — white stroke so it reads on light map
+      const markerSvg=[
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${outerR*2}" height="${outerR*2}" viewBox="0 0 ${outerR*2} ${outerR*2}" overflow="visible">`,
+        `<defs><filter id="g${ev.id.slice(-4)}"><feGaussianBlur in="SourceGraphic" stdDeviation="${sel?2.5:1.2}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`,
+        `<circle cx="${outerR}" cy="${outerR}" r="${outerR-1}" fill="${c}" opacity="${sel?.12:.05}"/>`,
+        tier>1?`<circle cx="${outerR}" cy="${outerR}" r="${innerR+5}" fill="none" stroke="${c}" stroke-width="1" opacity="${sel?.3:.1}"/>`:'',
+        `<circle cx="${outerR}" cy="${outerR}" r="${innerR}" fill="${c}" stroke="white" stroke-width="2" filter="url(#g${ev.id.slice(-4)})"/>`,
+        sel?[
+          `<circle cx="${outerR}" cy="${outerR}" r="${innerR}" fill="none" stroke="${c}" stroke-width="2">`,
+          `<animate attributeName="r" values="${innerR};${innerR+12};${innerR}" dur="2.2s" repeatCount="indefinite"/>`,
+          `<animate attributeName="opacity" values=".55;0;.55" dur="2.2s" repeatCount="indefinite"/>`,
+          `</circle>`,
+        ].join(''):'',
+        `</svg>`,
+      ].join('');
+
+      const icon=L.divIcon({className:'',html:`<div style="cursor:pointer;">${markerSvg}</div>`,iconSize:[outerR*2,outerR*2],iconAnchor:[outerR,outerR]});
+
+      // Rich popup tooltip
+      const popup=`<div style="width:228px;font-family:'Geist',-apple-system,sans-serif;">
+        <div style="padding:11px 13px 9px;border-bottom:1px solid #f0f0f0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M2 12h3l3-8 4 16 3-10 2 2h5" stroke="${c}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span style="font-family:'Geist Mono',monospace;font-size:10px;color:#71717a;font-weight:500;">${ev.id}</span>
+            </div>
+            <span style="font-size:12px;font-weight:700;color:${c};background:${c}16;border:1px solid ${c}30;padding:2px 7px;border-radius:4px;">M${ev.mag}</span>
+          </div>
+          <p style="font-size:13px;font-weight:600;color:#09090b;margin:0;letter-spacing:-.02em;">${ev.location}, ${ev.state}</p>
+        </div>
+        <div style="padding:8px 13px;display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+          <div style="background:#f9f9f9;border-radius:6px;padding:6px 9px;border:1px solid #ececec;">
+            <p style="font-size:9px;color:#a1a1aa;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 2px;">DATE</p>
+            <p style="font-size:11px;color:#09090b;font-weight:500;font-family:'Geist Mono',monospace;margin:0;">${ev.date}</p>
+          </div>
+          <div style="background:#f9f9f9;border-radius:6px;padding:6px 9px;border:1px solid #ececec;">
+            <p style="font-size:9px;color:#a1a1aa;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 2px;">TIME UTC</p>
+            <p style="font-size:11px;color:#09090b;font-weight:500;font-family:'Geist Mono',monospace;margin:0;">${ev.time}</p>
+          </div>
+          <div style="background:#f9f9f9;border-radius:6px;padding:6px 9px;border:1px solid #ececec;">
+            <p style="font-size:9px;color:#a1a1aa;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 2px;">DEPTH</p>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19,12 12,19 5,12"/></svg>
+              <p style="font-size:11px;color:#09090b;font-family:'Geist Mono',monospace;margin:0;font-weight:500;">${ev.depth} km</p>
+            </div>
+          </div>
+          <div style="background:${c}0d;border-radius:6px;padding:6px 9px;border:1px solid ${c}22;">
+            <p style="font-size:9px;color:${c}99;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 2px;">MAGNITUDE</p>
+            <p style="font-size:14px;color:${c};font-weight:700;font-family:'Geist Mono',monospace;margin:0;">M ${ev.mag}</p>
+          </div>
+        </div>
+        <div style="padding:5px 13px 9px;display:flex;align-items:center;gap:5px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
+          <span style="font-size:10px;color:#a1a1aa;">Click to select &amp; analyze</span>
+        </div>
+      </div>`;
+
+      const m=L.marker([ev.lat,ev.lng],{icon,zIndexOffset:sel?1000:0}).addTo(map).on('click',()=>onSelect(ev.id));
+      m.bindPopup(popup,{className:'core-tip',offset:[0,-(outerR+4)],maxWidth:240,closeButton:false,autoPan:false});
+      m.on('mouseover',function(){this.openPopup();});
+      m.on('mouseout',function(){this.closePopup();});
+      mkRef.current[ev.id]=m;
+    });
+
+    if(selectedId){
+      const ev=events.find(e=>e.id===selectedId);
+      if(ev) mapRef.current.flyTo([ev.lat,ev.lng],9.8,{duration:.9,easeLinearity:.4});
+    }
+  },[events,selectedId]);
+
+  useEffect(()=>{
+    if(!mapRef.current)return;
+    wellRef.current.forEach(m=>mapRef.current.removeLayer(m));
+    wellRef.current=[];
+    if(!showWells)return;
+    WELLS.forEach(w=>{
+      const sc=0.7+(w.vol/55000)*.6;
+      const sz=Math.round(20*sc);
+      const wellSvg=`<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 24 24">
+        <polygon points="12,1 23,12 12,23 1,12" fill="#09090b" stroke="white" stroke-width="1.5"/>
+        <polygon points="12,5 19,12 12,19 5,12" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".9"/>
+        <circle cx="12" cy="12" r="2.5" fill="white"/>
+      </svg>`;
+      const icon=L.divIcon({className:'',html:`<div style="cursor:default;opacity:.88;filter:drop-shadow(0 1px 3px rgba(0,0,0,.25));">${wellSvg}</div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+      const m=L.marker([w.lat,w.lng],{icon}).addTo(mapRef.current);
+
+      const wellPopup=`<div style="width:212px;font-family:'Geist',-apple-system,sans-serif;">
+        <div style="padding:11px 13px 9px;border-bottom:1px solid #f0f0f0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div style="width:24px;height:24px;background:#09090b;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2v6m0 0c-2.5 0-6 1.5-6 6a6 6 0 0 0 12 0c0-4.5-3.5-6-6-6z"/></svg>
+            </div>
+            <div>
+              <p style="font-size:9px;color:#a1a1aa;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:0 0 1px;">SWD Injection Well</p>
+              <p style="font-size:12px;font-weight:600;color:#09090b;margin:0;letter-spacing:-.01em;">${w.op}</p>
+            </div>
+          </div>
+        </div>
+        <div style="padding:8px 13px 10px;">
+          <div style="background:#f9f9f9;border-radius:6px;padding:8px 10px;border:1px solid #ececec;margin-bottom:6px;">
+            <p style="font-size:9px;color:#a1a1aa;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 3px;">DAILY INJECTION VOLUME</p>
+            <div style="display:flex;align-items:baseline;gap:5px;">
+              <span style="font-size:16px;font-weight:700;color:#09090b;font-family:'Geist Mono',monospace;">${w.vol.toLocaleString()}</span>
+              <span style="font-size:11px;color:#71717a;">bbl/day</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+            <div style="background:#f9f9f9;border-radius:6px;padding:6px 9px;border:1px solid #ececec;">
+              <p style="font-size:9px;color:#a1a1aa;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 2px;">LAT</p>
+              <p style="font-size:11px;color:#09090b;font-family:'Geist Mono',monospace;margin:0;">${w.lat.toFixed(3)}°N</p>
+            </div>
+            <div style="background:#f9f9f9;border-radius:6px;padding:6px 9px;border:1px solid #ececec;">
+              <p style="font-size:9px;color:#a1a1aa;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin:0 0 2px;">LONG</p>
+              <p style="font-size:11px;color:#09090b;font-family:'Geist Mono',monospace;margin:0;">${Math.abs(w.lng).toFixed(3)}°W</p>
+            </div>
+          </div>
+        </div>
+      </div>`;
+      m.bindPopup(wellPopup,{className:'core-tip',offset:[0,-sz/2-2],maxWidth:230,closeButton:false,autoPan:false});
+      m.on('mouseover',function(){this.openPopup();});
+      m.on('mouseout',function(){this.closePopup();});
+      wellRef.current.push(m);
+    });
+  },[showWells]);
+
+  useEffect(()=>{
+    if(!mapRef.current)return;
+    if(circleRef.current) mapRef.current.removeLayer(circleRef.current);
+    if(!selectedId||!showRadius)return;
+    const ev=EVENTS.find(e=>e.id===selectedId);
+    if(ev) circleRef.current=L.circle([ev.lat,ev.lng],{
+      radius:10000,color:'#09090b',weight:1.5,dashArray:'5 6',
+      fillColor:'#09090b',fillOpacity:.025,opacity:.2,
+    }).addTo(mapRef.current);
+  },[selectedId,showRadius]);
+
+  const selEv=EVENTS.find(e=>e.id===selectedId);
+
+  return (
+    <div style={{flex:1,position:'relative',overflow:'hidden'}}>
+      <div ref={ref} style={{width:'100%',height:'100%'}}/>
+
+      {/* Legend */}
+      <div style={{position:'absolute',bottom:16,left:16,zIndex:800,
+        background:'rgba(255,255,255,.97)',border:'1px solid var(--line)',
+        borderRadius:10,padding:'12px 14px',boxShadow:'0 4px 18px rgba(0,0,0,.09)',minWidth:200}}>
+        <p style={{fontSize:9,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.12em',marginBottom:10}}>Map Legend</p>
+        <p style={{fontSize:9,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:7}}>Seismic Events</p>
+        {[['#dc2626','M ≥ 4.0','High'],['#b45309','M 3.0–3.9','Moderate'],['#2563eb','M < 3.0','Low']].map(([c,mag,l])=>(
+          <div key={l} style={{display:'flex',alignItems:'center',gap:9,marginBottom:6}}>
+            <svg width="16" height="16" viewBox="0 0 32 32">
+              <circle cx="16" cy="16" r="12" fill={c} opacity=".1"/>
+              <circle cx="16" cy="16" r="6" fill={c} stroke="white" strokeWidth="2"/>
+            </svg>
+            <span style={{fontSize:11,color:'var(--t2)'}}>
+              <b style={{color:'var(--t1)',fontWeight:600}}>{mag}</b>
+              <span style={{color:'var(--t3)'}}> — {l}</span>
+            </span>
+          </div>
+        ))}
+        <div style={{height:1,background:'var(--line)',margin:'8px 0'}}/>
+        <p style={{fontSize:9,fontWeight:600,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:7}}>Infrastructure</p>
+        <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:6}}>
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <polygon points="12,1 23,12 12,23 1,12" fill="#09090b" stroke="white" strokeWidth="1"/>
+            <circle cx="12" cy="12" r="2.5" fill="white"/>
+          </svg>
+          <span style={{fontSize:11,color:'var(--t2)'}}>SWD Well <span style={{color:'var(--t3)'}}>· size = volume</span></span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:9}}>
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="#09090b" strokeWidth="1.2" strokeDasharray="3 3" opacity=".35"/>
+          </svg>
+          <span style={{fontSize:11,color:'var(--t3)'}}>10 km analysis radius</span>
+        </div>
+      </div>
+
+      {/* Selected event chip */}
+      {selEv&&(
+        <div style={{position:'absolute',top:12,left:'50%',transform:'translateX(-50%)',zIndex:800,
+          background:'rgba(255,255,255,.97)',border:'1px solid var(--line)',borderRadius:20,
+          padding:'5px 14px',display:'flex',alignItems:'center',gap:9,
+          fontSize:10,fontFamily:'var(--mono)',boxShadow:'0 2px 10px rgba(0,0,0,.08)'}}>
+          <Dot on color={magColor(selEv.mag)}/>
+          <span style={{color:'var(--t2)',fontWeight:500}}>{selEv.id}</span>
+          <span style={{color:'var(--t4)'}}>·</span>
+          <span style={{color:'var(--t3)'}}>{selEv.lat.toFixed(3)}°N, {Math.abs(selEv.lng).toFixed(3)}°W</span>
+          <span style={{color:'var(--t4)'}}>·</span>
+          <span style={{color:magColor(selEv.mag),fontWeight:700}}>M{selEv.mag}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Confidence bar ───────────────────────────────────────────────────────────
+function ConfBar({val,color,animated=false}) {
+  const [w,setW]=useState(animated?0:val);
+  useEffect(()=>{if(animated){const t=setTimeout(()=>setW(val),120);return()=>clearTimeout(t);}},[val,animated]);
+  return (
+    <div style={{height:4,background:'var(--bg3)',borderRadius:2,overflow:'hidden',flex:1}}>
+      <div style={{height:'100%',width:`${w}%`,background:color,borderRadius:2,
+        transition:'width .95s cubic-bezier(.4,0,.2,1)',boxShadow:`0 0 6px ${color}55`}}/>
+    </div>
+  );
+}
+
+// ─── Result Panel ─────────────────────────────────────────────────────────────
+function ResultPanel({event,result,state,onAnalyze}) {
+  if(!event) return (
+    <div style={{width:355,borderLeft:'1px solid var(--line)',display:'flex',flexDirection:'column',
+      alignItems:'center',justifyContent:'center',background:'var(--bg1)',gap:10}}>
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <circle cx="12" cy="17" r=".5" fill="var(--t4)"/>
+      </svg>
+      <p style={{fontSize:12,color:'var(--t3)',textAlign:'center',maxWidth:175,lineHeight:1.65}}>Select a seismic event to begin attribution analysis</p>
+    </div>
+  );
+
+  const b=magLabel(event.mag);
+  return (
+    <div style={{width:355,borderLeft:'1px solid var(--line)',display:'flex',flexDirection:'column',background:'var(--bg1)',overflow:'hidden'}}>
+      {/* Header */}
+      <div style={{padding:'12px 15px',borderBottom:'1px solid var(--line)',flexShrink:0,background:'#fff'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}>
+          <span style={{fontSize:10,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.1em'}}>Attribution</span>
+          <Pill c={b.c} bg={b.bg} br={b.br} small>{b.l} — M{event.mag}</Pill>
+        </div>
+        <p style={{fontWeight:700,fontSize:15,color:'var(--t1)',letterSpacing:'-.03em',marginBottom:2}}>{event.location}, {event.state}</p>
+        <p style={{fontSize:10,color:'var(--t3)',fontFamily:'var(--mono)'}}>{event.id} · {event.date} · {event.time} UTC</p>
+      </div>
+
+      {/* Meta */}
+      <div style={{padding:'11px 15px',borderBottom:'1px solid var(--line)',flexShrink:0}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5}}>
+          {[['MAG',`M${event.mag}`,b.c],['DEPTH',`${event.depth} km`,null],['COORDS',`${event.lat.toFixed(2)}°N`,null]].map(([k,v,c])=>(
+            <div key={k} style={{background:'#fff',borderRadius:6,padding:'7px 9px',border:'1px solid var(--line)'}}>
+              <p style={{fontSize:9,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:700,marginBottom:2}}>{k}</p>
+              <p style={{fontSize:12,fontWeight:600,color:c||'var(--t1)',fontFamily:'var(--mono)'}}>{v}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Analyze */}
+      {state==='idle'&&(
+        <div style={{padding:'11px 15px',borderBottom:'1px solid var(--line)',flexShrink:0}}>
+          <button onClick={onAnalyze} style={{
+            width:'100%',padding:'10px',borderRadius:8,
+            background:'var(--t1)',color:'#fff',border:'none',cursor:'pointer',
+            fontWeight:600,fontSize:13,fontFamily:'var(--sans)',letterSpacing:'-.01em',
+            display:'flex',alignItems:'center',justifyContent:'center',gap:8,
+            transition:'all .15s',boxShadow:'0 2px 12px rgba(9,9,11,.25)',
+          }}
+            onMouseEnter={e=>{e.currentTarget.style.background='#27272a';e.currentTarget.style.transform='translateY(-1px)';}}
+            onMouseLeave={e=>{e.currentTarget.style.background='var(--t1)';e.currentTarget.style.transform='translateY(0)';}}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5,3 19,12 5,21"/></svg>
+            Analyze Event
+          </button>
+        </div>
+      )}
+
+      {/* Loading */}
+      {state==='loading'&&(
+        <div style={{padding:'13px 15px',borderBottom:'1px solid var(--line)',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:9,padding:'8px 11px',background:'#fff',
+            borderRadius:7,border:'1px solid var(--line)',marginBottom:12}}>
+            <Spinner/><span style={{fontSize:12,color:'var(--t2)',fontWeight:500}}>Running attribution engine…</span>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {['Loading regional dataset','Gathering contextual records','Executing attribution logic','Generating evidence object'].map((s,i)=>(
+              <StepRow key={s} label={s} delay={i*700}/>
+            ))}
+          </div>
+          <div style={{marginTop:12,display:'flex',flexDirection:'column',gap:5}}>
+            {[88,55,72,42].map((w,i)=><div key={i} className="skel" style={{height:11,width:`${w}%`}}/>)}
+          </div>
+        </div>
+      )}
+
+      {/* Result */}
+      {state==='done'&&result&&(
+        <div style={{flex:1,overflowY:'auto'}} className="slide-left">
+          {/* Driver */}
+          <div style={{padding:'13px 15px',borderBottom:'1px solid var(--line)'}}>
+            <p style={{fontSize:9,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:9}}>Leading Interpretation</p>
+            <div style={{background:'#fff',border:`1px solid ${result.levelBr}`,borderRadius:9,padding:'12px',
+              marginBottom:10,boxShadow:`0 2px 12px ${result.levelColor}0d`}}>
+              <p style={{fontWeight:600,fontSize:13,color:'var(--t1)',lineHeight:1.45,marginBottom:8,letterSpacing:'-.01em'}}>{result.driver}</p>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                <ConfBar val={result.conf} color={result.levelColor} animated/>
+                <span style={{fontSize:13,fontWeight:700,color:result.levelColor,fontFamily:'var(--mono)',flexShrink:0}}>{result.conf}%</span>
+              </div>
+              <Pill c={result.levelColor} bg={result.levelBg} br={result.levelBr}>{result.levelLabel}</Pill>
+            </div>
+            <p style={{fontSize:12,color:'var(--t2)',lineHeight:1.72}}>{result.explanation}</p>
+          </div>
+
+          {/* Signals */}
+          <div style={{padding:'13px 15px',borderBottom:'1px solid var(--line)'}}>
+            <p style={{fontSize:9,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:9}}>Supporting Signals</p>
+            <div style={{display:'flex',flexDirection:'column',gap:4}}>
+              {result.signals.map((s,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+                  padding:'7px 10px',background:'#fff',borderRadius:6,
+                  border:`1px solid ${s.flag?'rgba(180,83,9,.2)':'var(--line)'}`,transition:'border .15s'}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=s.flag?'rgba(180,83,9,.35)':'var(--line2)'}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor=s.flag?'rgba(180,83,9,.2)':'var(--line)'}
+                >
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{width:5,height:5,borderRadius:'50%',flexShrink:0,
+                      background:s.flag?'#b45309':'var(--t4)',border:`1px solid ${s.flag?'rgba(180,83,9,.4)':'var(--line2)'}`}}/>
+                    <span style={{fontSize:11,color:'var(--t2)'}}>{s.k}</span>
+                  </div>
+                  <span style={{fontSize:11,fontWeight:600,fontFamily:'var(--mono)',color:s.flag?'#b45309':'var(--t1)'}}>{s.v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Wells */}
+          {result.nearby.length>0&&(
+            <div style={{padding:'13px 15px',borderBottom:'1px solid var(--line)'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:9}}>
+                <p style={{fontSize:9,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.1em'}}>Qualifying SWD Wells</p>
+                <span style={{fontSize:10,fontFamily:'var(--mono)',color:'var(--t3)',background:'var(--bg2)',padding:'1px 7px',borderRadius:10,border:'1px solid var(--line)'}}>{result.nearby.length}</span>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                {result.nearby.map((w,i)=>(
+                  <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+                    padding:'8px 10px',background:'#fff',borderRadius:6,border:'1px solid var(--line)'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <svg width="13" height="13" viewBox="0 0 24 24">
+                        <polygon points="12,1 23,12 12,23 1,12" fill="#09090b" stroke="white" strokeWidth="1"/>
+                        <circle cx="12" cy="12" r="2.5" fill="white"/>
+                      </svg>
+                      <span style={{fontSize:11,color:'var(--t2)',fontWeight:500}}>{w.op}</span>
+                    </div>
+                    <span style={{fontSize:10,fontFamily:'var(--mono)',color:'var(--t3)'}}>{w.vol.toLocaleString()} bbl/d</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Alt */}
+          <div style={{padding:'13px 15px',borderBottom:'1px solid var(--line)'}}>
+            <p style={{fontSize:9,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:9}}>Alternative Hypothesis</p>
+            <div style={{background:'#fff',borderRadius:7,padding:'10px 12px',border:'1px solid var(--line)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:7}}>
+                <span style={{fontSize:12,color:'var(--t3)'}}>{result.alt}</span>
+                <span style={{fontSize:11,fontWeight:600,fontFamily:'var(--mono)',color:'var(--t3)'}}>{result.altConf}%</span>
+              </div>
+              <ConfBar val={result.altConf} color='var(--t4)' animated/>
+            </div>
+          </div>
+
+          {/* Re-run */}
+          <div style={{padding:'11px 15px',borderBottom:'1px solid var(--line)'}}>
+            <button onClick={onAnalyze} style={{width:'100%',padding:'8px',borderRadius:7,background:'transparent',
+              color:'var(--t2)',border:'1px solid var(--line2)',cursor:'pointer',fontWeight:500,fontSize:12,
+              fontFamily:'var(--sans)',transition:'all .15s',display:'flex',alignItems:'center',justifyContent:'center',gap:7}}
+              onMouseEnter={e=>{e.currentTarget.style.background='var(--bg3)';e.currentTarget.style.color='var(--t1)';}}
+              onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--t2)';}}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Re-run Analysis
+            </button>
+          </div>
+
+          <div style={{padding:'10px 15px'}}>
+            <p style={{fontSize:10,color:'var(--t3)',lineHeight:1.65}}>
+              Decision-support only. Does not constitute definitive causation attribution or legal culpability determination.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StepRow({label,delay}) {
+  const [done,setDone]=useState(false);
+  const [active,setActive]=useState(false);
+  useEffect(()=>{
+    const t1=setTimeout(()=>setActive(true),delay);
+    const t2=setTimeout(()=>setDone(true),delay+600);
+    return()=>{clearTimeout(t1);clearTimeout(t2);};
+  },[delay]);
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:8,opacity:active?1:.2,transition:'opacity .3s'}}>
+      {done
+        ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20,6 9,17 4,12"/></svg>
+        : active ? <Spinner sz={13}/> : <div style={{width:13,height:13,borderRadius:'50%',border:'1.5px solid var(--line2)'}}/>
+      }
+      <span style={{fontSize:11,color:done?'#16a34a':active?'var(--t2)':'var(--t3)'}}>{label}</span>
+    </div>
+  );
+}
+
+// ─── Status Bar ───────────────────────────────────────────────────────────────
+function StatusBar({state,event}) {
+  const msgs={
+    idle: event ? `${event.id} selected — click Analyze Event to begin` : 'Ready · Select a seismic event from the list',
+    loading: `Executing attribution engine for ${event?.id}…`,
+    done: `Analysis complete · ${event?.id} · ${new Date().toISOString().slice(0,19)} UTC`,
+  };
+  const dotColor={idle:'var(--t4)',loading:'#b45309',done:'#16a34a'};
+  return (
+    <div style={{height:26,background:'#fff',borderTop:'1px solid var(--line)',
+      display:'flex',alignItems:'center',padding:'0 16px',gap:8,flexShrink:0}}>
+      {state==='loading'
+        ? <div style={{display:'flex',gap:3}}>{[0,1,2].map(i=><div key={i} style={{width:3,height:3,borderRadius:'50%',background:'#b45309',animation:`pulse 1s ${i*.18}s infinite`}}/>)}</div>
+        : <div style={{width:5,height:5,borderRadius:'50%',background:dotColor[state]}}/>
+      }
+      <span style={{fontSize:10,color:'var(--t3)',fontFamily:'var(--mono)'}}>{msgs[state]}</span>
+      {state==='done'&&<span style={{marginLeft:'auto',fontSize:10,color:'var(--t3)',fontFamily:'var(--mono)'}}>Attribution Engine v2.1 · West Texas</span>}
+    </div>
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [selectedId,setSelectedId]=useState(null);
+  const [state,setState]=useState('idle');
+  const [result,setResult]=useState(null);
+  const [showWells,setShowWells]=useState(true);
+  const [showRadius,setShowRadius]=useState(true);
+
+  const event=EVENTS.find(e=>e.id===selectedId)||null;
+
+  const handleSelect=id=>{if(id!==selectedId){setSelectedId(id);setState('idle');setResult(null);}};
+  const handleAnalyze=()=>{
+    if(!event||state==='loading')return;
+    setState('loading');setResult(null);
+    setTimeout(()=>{setResult(buildResult(event));setState('done');},3600);
+  };
+
+  useEffect(()=>{
+    const w=document.getElementById('tw-wells');
+    const r=document.getElementById('tw-radius');
+    const g=document.getElementById('tw-gray');
+    if(w) w.addEventListener('change',e=>setShowWells(e.target.checked));
+    if(r) r.addEventListener('change',e=>setShowRadius(e.target.checked));
+    if(g) g.addEventListener('change',e=>{
+      document.querySelectorAll('.leaflet-tile').forEach(t=>{
+        t.style.filter=e.target.checked?'grayscale(1) contrast(0.8) brightness(1.12)':'none';
+      });
+    });
+  },[]);
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',height:'100vh'}}>
+      <Topbar n={EVENTS.length}/>
+      <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+        <EventList events={EVENTS} selectedId={selectedId} onSelect={handleSelect} disabled={state==='loading'}/>
+        <MapView events={EVENTS} selectedId={selectedId} onSelect={handleSelect} showWells={showWells} showRadius={showRadius}/>
+        <ResultPanel event={event} result={result} state={state} onAnalyze={handleAnalyze}/>
+      </div>
+      <StatusBar state={state} event={event}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+<script>
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{"grayMap":true,"showWells":true,"showRadius":true}/*EDITMODE-END*/;
+window.addEventListener('message',e=>{
+  if(e.data?.type==='__activate_edit_mode') document.getElementById('twk').classList.add('on');
+  if(e.data?.type==='__deactivate_edit_mode') document.getElementById('twk').classList.remove('on');
+});
+window.parent.postMessage({type:'__edit_mode_available'},'*');
+</script>
+</body>
+</html>
