@@ -1,23 +1,39 @@
 {
   "name": "core-seismic-front",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-popover": "^1.1.14",
+    "@radix-ui/react-select": "^2.1.7",
+    "@radix-ui/react-slider": "^1.2.7",
+    "@radix-ui/react-switch": "^1.1.7",
+    "@radix-ui/react-tabs": "^1.1.7",
+    "@radix-ui/react-tooltip": "^1.1.14",
+    "@tanstack/react-query": "^5.62.7",
+    "@tanstack/react-query-devtools": "^5.62.7",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "recharts": "^2.15.0",
+    "sonner": "^1.7.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.7",
+    "@types/leaflet": "^1.9.16",
+    "@types/node": "^22.10.0",
     "@types/react": "^18.3.24",
     "@types/react-dom": "^18.3.7",
-    "@types/leaflet": "^1.9.16",
-    "@tailwindcss/postcss": "^4.1.7",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.6",

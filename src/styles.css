@@ -1,39 +1,223 @@
 @import "tailwindcss";
 
-@keyframes pulse {
+/* ──────────────────────────────────────────────────────────────────
+   Design tokens — Tailwind v4 @theme
+   Use as: bg-bg / text-fg / border-border / bg-card / text-muted
+           text-mag-low / bg-swd / text-frac / bg-station
+   ────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Surfaces */
+  --color-bg: oklch(93% 0.010 250);
+  --color-fg: oklch(12% 0.012 260);
+  --color-muted: oklch(50% 0.014 260);
+  --color-subtle: oklch(65% 0.010 260);
+  --color-border: oklch(83% 0.010 260);
+  --color-border-strong: oklch(72% 0.014 260);
+  --color-card: oklch(100% 0 0);
+  --color-card-elevated: oklch(97% 0.006 260);
+  --color-overlay: oklch(15% 0.01 260 / 0.55);
+
+  /* Brand accents */
+  --color-accent: oklch(58% 0.16 255);
+  --color-accent-fg: oklch(99% 0 0);
+
+  /* Magnitude buckets — FRONTEND_GUIDE §2.1 */
+  --color-mag-low: oklch(60% 0.025 260);     /* <2 = gray */
+  --color-mag-mid: oklch(78% 0.16 90);       /* 2-3 = yellow */
+  --color-mag-high: oklch(70% 0.18 50);      /* 3-4 = orange */
+  --color-mag-extreme: oklch(58% 0.22 28);   /* 4+ = red */
+
+  /* Domain colors */
+  --color-swd: oklch(65% 0.16 50);           /* orange family */
+  --color-frac: oklch(58% 0.20 295);         /* purple family */
+  --color-station: oklch(60% 0.15 235);      /* blue family */
+
+  /* Status palette (sync) */
+  --color-status-success: oklch(65% 0.16 150);
+  --color-status-running: oklch(60% 0.18 250);
+  --color-status-failed: oklch(58% 0.22 28);
+  --color-status-skipped: oklch(70% 0.01 260);
+  --color-status-pending: oklch(78% 0.15 90);
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Shadows */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 0 0 1px var(--color-border), 0 1px 0 rgba(0, 0, 0, 0.02);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.15);
+
+  /* Radii */
+  --radius-card: 0.875rem;
+  --radius-sm: 0.5rem;
+  --radius-pill: 9999px;
+}
+
+/* Dark mode override */
+.dark {
+  --color-bg: oklch(13% 0.005 260);
+  --color-fg: oklch(96% 0.005 260);
+  --color-muted: oklch(63% 0.012 260);
+  --color-subtle: oklch(45% 0.01 260);
+  --color-border: oklch(22% 0.008 260);
+  --color-border-strong: oklch(30% 0.008 260);
+  --color-card: oklch(17% 0.006 260);
+  --color-card-elevated: oklch(20% 0.008 260);
+  --color-overlay: oklch(0% 0 0 / 0.65);
+
+  --color-accent: oklch(70% 0.18 255);
+  --color-accent-fg: oklch(13% 0.005 260);
+
+  --color-mag-low: oklch(65% 0.018 260);
+  --color-mag-mid: oklch(82% 0.18 90);
+  --color-mag-high: oklch(75% 0.20 50);
+  --color-mag-extreme: oklch(68% 0.24 28);
+
+  --color-swd: oklch(72% 0.18 50);
+  --color-frac: oklch(68% 0.22 295);
+  --color-station: oklch(70% 0.18 235);
+
+  --color-status-success: oklch(72% 0.18 150);
+  --color-status-running: oklch(70% 0.20 250);
+  --color-status-failed: oklch(68% 0.24 28);
+  --color-status-skipped: oklch(55% 0.01 260);
+  --color-status-pending: oklch(82% 0.18 90);
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 0 0 1px var(--color-border), 0 1px 0 rgba(255, 255, 255, 0.02);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Base
+   ────────────────────────────────────────────────────────────────── */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono,
+[class*="font-mono"] {
+  font-feature-settings: "tnum", "ss01";
+}
+
+table,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbars */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-subtle);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Selection */
+::selection {
+  background: color-mix(in oklch, var(--color-accent) 35%, transparent);
+  color: var(--color-fg);
+}
+
+/* Focus ring helper */
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Animations
+   ────────────────────────────────────────────────────────────────── */
+@keyframes pulse-soft {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.4;
+  }
+}
+@keyframes ring-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+@keyframes verdict-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes score-fill {
+  from {
+    width: 0;
   }
 }
 
-/* Leaflet basics */
+/* ──────────────────────────────────────────────────────────────────
+   Leaflet — base + theme-aware
+   ────────────────────────────────────────────────────────────────── */
 .leaflet-container {
-  background: #e0e0e0 !important;
+  background: var(--color-bg) !important;
+  font-family: var(--font-sans);
+  z-index: 10;
 }
+
 .leaflet-tile {
-  filter: grayscale(1) contrast(0.8) brightness(1.12);
+  filter: grayscale(0.85) contrast(0.9) brightness(1.04);
 }
+.dark .leaflet-tile {
+  filter: grayscale(0.95) brightness(0.45) contrast(1.1) invert(0.92) hue-rotate(180deg);
+}
+
 .leaflet-control-zoom {
-  border: 1px solid rgb(228 228 231) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 10px !important;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: var(--shadow-soft) !important;
+  margin-top: 80px !important; /* Move down to avoid header overlay if any */
 }
 .leaflet-control-zoom a {
-  background: #fff !important;
-  color: rgb(9 9 11) !important;
-  border-color: rgb(228 228 231) !important;
-  width: 28px !important;
-  height: 28px !important;
-  line-height: 28px !important;
-  font-size: 16px !important;
+  background: var(--color-card) !important;
+  color: var(--color-fg) !important;
+  border-color: var(--color-border) !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  font-size: 18px !important;
 }
 .leaflet-control-zoom a:hover {
-  background: rgb(244 244 245) !important;
+  background: var(--color-card-elevated) !important;
 }
 .leaflet-control-attribution {
   display: none !important;
@@ -41,16 +225,44 @@
 
 /* Rich hover popup */
 .core-tip .leaflet-popup-content-wrapper {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
   padding: 0 !important;
   overflow: hidden !important;
-  border: 1px solid rgb(228 228 231) !important;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid var(--color-border) !important;
+  background: color-mix(in oklch, var(--color-card) 88%, transparent) !important;
+  backdrop-filter: blur(12px) saturate(140%) !important;
+  color: var(--color-fg) !important;
+  box-shadow: var(--shadow-pop) !important;
 }
 .core-tip .leaflet-popup-content {
   margin: 0 !important;
-  line-height: 1 !important;
+  line-height: 1.4 !important;
 }
 .core-tip .leaflet-popup-tip-container {
   display: none !important;
 }
+
+/* Glassmorphism utility */
+.glass {
+  background: color-mix(in oklch, var(--color-card) 45%, transparent);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid color-mix(in oklch, var(--color-border) 30%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+.dark .glass {
+  background: color-mix(in oklch, var(--color-card) 35%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid color-mix(in oklch, var(--color-border) 20%, transparent);
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   Sonner (toasts) — pick up tokens
+   ────────────────────────────────────────────────────────────────── */
+[data-sonner-toaster] {
+  --normal-bg: var(--color-card);
+  --normal-text: var(--color-fg);
+  --normal-border: var(--color-border);
+}
+
