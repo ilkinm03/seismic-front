@@ -201,7 +201,7 @@ export interface AnalysisParams {
 
 export const DEFAULT_ANALYSIS_PARAMS: AnalysisParams = {
   swd_radius_km: 20,
-  swd_window_days: 3650,
+  swd_window_days: 730,
   frac_radius_km: 10,
   frac_window_days: 730,
   station_radius_km: 50,

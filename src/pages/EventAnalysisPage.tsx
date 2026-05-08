@@ -84,6 +84,9 @@ const PARAM_ROWS: SliderRow[] = [
   },
 ];
 
+const CONTEXT_TAB_CLASS =
+  "cursor-pointer data-[state=active]:bg-[var(--color-card)] data-[state=active]:text-[var(--color-fg)] data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--color-accent)] h-full px-6";
+
 type ContextFocusSource = "table" | "map";
 
 type SignalTarget =
@@ -367,21 +370,21 @@ export function EventAnalysisPage() {
                   <TabsTrigger
                     value="swd"
                     count={context.nearby_swd_wells.length}
-                    className="data-[state=active]:bg-white cursor-pointer data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--color-accent)] h-full px-6"
+                    className={CONTEXT_TAB_CLASS}
                   >
                     SWD Wells
                   </TabsTrigger>
                   <TabsTrigger
                     value="frac"
                     count={context.nearby_frac_jobs.length}
-                    className="data-[state=active]:bg-white cursor-pointer data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--color-accent)] h-full px-6"
+                    className={CONTEXT_TAB_CLASS}
                   >
                     Frac Jobs
                   </TabsTrigger>
                   <TabsTrigger
                     value="stations"
                     count={context.nearby_stations.length}
-                    className="data-[state=active]:bg-white cursor-pointer data-[state=active]:shadow-sm rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--color-accent)] h-full px-6"
+                    className={CONTEXT_TAB_CLASS}
                   >
                     Seismic Stations
                   </TabsTrigger>
