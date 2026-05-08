@@ -1,7 +1,15 @@
-import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import {
+  forwardRef,
+  type HTMLAttributes,
+  type TdHTMLAttributes,
+  type ThHTMLAttributes,
+} from "react";
 import { cn } from "@/lib/cn";
 
-export function Table({ className, ...rest }: HTMLAttributes<HTMLTableElement>) {
+export function Table({
+  className,
+  ...rest
+}: HTMLAttributes<HTMLTableElement>) {
   return (
     <table
       className={cn("w-full border-collapse text-sm tabular", className)}
@@ -10,17 +18,27 @@ export function Table({ className, ...rest }: HTMLAttributes<HTMLTableElement>) 
   );
 }
 
-export function THead({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
+export function THead({
+  className,
+  ...rest
+}: HTMLAttributes<HTMLTableSectionElement>) {
   return <thead className={cn("text-left", className)} {...rest} />;
 }
 
-export function TBody({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
+export function TBody({
+  className,
+  ...rest
+}: HTMLAttributes<HTMLTableSectionElement>) {
   return <tbody className={cn(className)} {...rest} />;
 }
 
-export function TR({ className, ...rest }: HTMLAttributes<HTMLTableRowElement>) {
+export const TR = forwardRef<
+  HTMLTableRowElement,
+  HTMLAttributes<HTMLTableRowElement>
+>(function TR({ className, ...rest }, ref) {
   return (
     <tr
+      ref={ref}
       className={cn(
         "border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-card-elevated)]/60",
         className,
@@ -28,9 +46,12 @@ export function TR({ className, ...rest }: HTMLAttributes<HTMLTableRowElement>) 
       {...rest}
     />
   );
-}
+});
 
-export function TH({ className, ...rest }: ThHTMLAttributes<HTMLTableCellElement>) {
+export function TH({
+  className,
+  ...rest
+}: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
       className={cn(
@@ -42,6 +63,14 @@ export function TH({ className, ...rest }: ThHTMLAttributes<HTMLTableCellElement
   );
 }
 
-export function TD({ className, ...rest }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-3 py-2 align-middle text-[var(--color-fg)]", className)} {...rest} />;
+export function TD({
+  className,
+  ...rest
+}: TdHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <td
+      className={cn("px-3 py-2 align-middle text-[var(--color-fg)]", className)}
+      {...rest}
+    />
+  );
 }

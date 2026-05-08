@@ -16,7 +16,9 @@ export function Dot({
         width: size,
         height: size,
         background: on ? color : "var(--color-border-strong)",
-        boxShadow: on ? `0 0 0 2px color-mix(in oklch, ${color} 22%, transparent)` : "none",
+        boxShadow: on
+          ? `0 0 0 2px color-mix(in oklch, ${color} 22%, transparent)`
+          : "none",
       }}
     >
       {pulse && on ? (

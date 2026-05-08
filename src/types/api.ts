@@ -21,8 +21,19 @@ export interface Paginated<T> {
 // Sync (Dashboard)
 // ──────────────────────────────────────────────────────────────────
 
-export type SyncSource = "fracfocus" | "uic" | "h10" | "texnet" | "usgs" | "iris";
-export type SyncStatus = "pending" | "running" | "success" | "failed" | "skipped";
+export type SyncSource =
+  | "fracfocus"
+  | "uic"
+  | "h10"
+  | "texnet"
+  | "usgs"
+  | "iris";
+export type SyncStatus =
+  | "pending"
+  | "running"
+  | "success"
+  | "failed"
+  | "skipped";
 
 export interface SyncRun {
   id: number;

@@ -17,7 +17,8 @@ export function EventsMap({ events, selectedId, onSelect }: EventsMapProps) {
   const { theme } = useTheme();
   const [variant, setVariant] = useState<"dark" | "light" | "satellite">(() => {
     const saved = localStorage.getItem("seismic-map-variant");
-    if (saved === "dark" || saved === "light" || saved === "satellite") return saved as any;
+    if (saved === "dark" || saved === "light" || saved === "satellite")
+      return saved as any;
     return theme;
   });
 
@@ -44,10 +45,15 @@ export function EventsMap({ events, selectedId, onSelect }: EventsMapProps) {
     <div className="relative h-full w-full overflow-hidden">
       <MapBase variant={variant}>
         {(map) => (
-          <EventsLayerInjector map={map} events={events} selectedId={selectedId} onSelect={onSelect} />
+          <EventsLayerInjector
+            map={map}
+            events={events}
+            selectedId={selectedId}
+            onSelect={onSelect}
+          />
         )}
       </MapBase>
-      
+
       <div className="absolute top-8 right-8 z-[800]">
         <div className="flex items-center gap-1 rounded-2xl bg-neutral-900/80 p-1 shadow-2xl backdrop-blur-xl border border-white/10">
           {modes.map((m) => (
@@ -55,8 +61,8 @@ export function EventsMap({ events, selectedId, onSelect }: EventsMapProps) {
               key={m.id}
               onClick={() => setVariant(m.id)}
               className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                variant === m.id 
-                  ? "bg-white/10 text-white shadow-inner" 
+                variant === m.id
+                  ? "bg-white/10 text-white shadow-inner"
                   : "text-neutral-400 hover:text-neutral-200"
               }`}
             >
@@ -107,11 +113,12 @@ function Legend() {
               className="inline-block size-3.5 rounded-full border-2 border-white/20 shadow-[0_0_8px_rgba(255,255,255,0.1)]"
               style={{ background: magHexFallback(it.mag) }}
             />
-            <span className="text-[12px] font-bold text-neutral-100/90 tracking-tight">{it.label}</span>
+            <span className="text-[12px] font-bold text-neutral-100/90 tracking-tight">
+              {it.label}
+            </span>
           </div>
         ))}
       </div>
     </div>
   );
 }
-

@@ -14,12 +14,15 @@ export function useSyncHistory(params: SyncHistoryParams = {}) {
     refetchInterval: (query) => {
       const data = query.state.data;
       if (!data || !data.items.length) return false;
-      
+
       const latest = data.items[0];
-      const isRunning = latest.status === "running" || latest.status === "pending";
+      const isRunning =
+        latest.status === "running" || latest.status === "pending";
       if (!isRunning) return false;
-      
-      const started = latest.started_at ? Date.parse(latest.started_at) : Date.parse(latest.created_at);
+
+      const started = latest.started_at
+        ? Date.parse(latest.started_at)
+        : Date.parse(latest.created_at);
       const now = Date.now();
       const isRecent = now - started < 15 * 60 * 1000; // 15 minute timeout
 

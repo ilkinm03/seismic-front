@@ -1,4 +1,8 @@
-import L, { type Map as LMap, type LatLngBoundsExpression, type LatLngTuple } from "leaflet";
+import L, {
+  type Map as LMap,
+  type LatLngBoundsExpression,
+  type LatLngTuple,
+} from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   forwardRef,
@@ -26,11 +30,16 @@ export interface MapBaseProps {
   variant?: "dark" | "light" | "satellite";
 }
 
-const TILE_URL_DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const TILE_URL_LIGHT = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-const SATELLITE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
-const SATELLITE_ATTRIBUTION = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community";
+const TILE_URL_DARK =
+  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TILE_URL_LIGHT =
+  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const SATELLITE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const SATELLITE_ATTRIBUTION =
+  "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community";
 
 /**
  * Generic Leaflet container.
@@ -49,14 +58,17 @@ export const MapBase = forwardRef<MapBaseHandle, MapBaseProps>(function MapBase(
   useEffect(() => {
     if (!containerRef.current || map) return;
     const instance = L.map(containerRef.current, {
-      center: initialCenter ?? [DELAWARE_BASIN.centerLat, DELAWARE_BASIN.centerLon],
+      center: initialCenter ?? [
+        DELAWARE_BASIN.centerLat,
+        DELAWARE_BASIN.centerLon,
+      ],
       zoom: initialZoom ?? DELAWARE_BASIN.defaultZoom,
       zoomControl: true,
       attributionControl: false,
-      preferCanvas: true, 
+      preferCanvas: true,
     });
     setMap(instance);
-    
+
     // Initial tile layer
     const getUrl = () => {
       if (variant === "satellite") return SATELLITE_URL;
@@ -68,10 +80,10 @@ export const MapBase = forwardRef<MapBaseHandle, MapBaseProps>(function MapBase(
       return ATTRIBUTION;
     };
 
-    const tiles = L.tileLayer(getUrl(), { 
+    const tiles = L.tileLayer(getUrl(), {
       maxZoom: 18,
       attribution: getAttr(),
-      updateWhenIdle: true, 
+      updateWhenIdle: true,
       keepBuffer: 2,
     }).addTo(instance);
 
@@ -97,7 +109,7 @@ export const MapBase = forwardRef<MapBaseHandle, MapBaseProps>(function MapBase(
     if (!map) return;
     const instance = map as any;
     if (instance._baseLayer) instance.removeLayer(instance._baseLayer);
-    
+
     const getUrl = () => {
       if (variant === "satellite") return SATELLITE_URL;
       if (variant === "light") return TILE_URL_LIGHT;
@@ -112,7 +124,7 @@ export const MapBase = forwardRef<MapBaseHandle, MapBaseProps>(function MapBase(
       maxZoom: 18,
       attribution: getAttr(),
     }).addTo(map);
-    
+
     instance._baseLayer = next;
   }, [map, variant]);
 

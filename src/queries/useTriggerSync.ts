@@ -18,10 +18,13 @@ const SOURCE_LABEL: Record<SyncSource, string> = {
 };
 
 function summarize(label: string, summary: SyncFetchSummary): string {
-  if (summary.status !== "success") return `${label} failed: ${summary.error ?? "unknown"}`;
+  if (summary.status !== "success")
+    return `${label} failed: ${summary.error ?? "unknown"}`;
   const parts: string[] = [];
-  if (typeof summary.inserted === "number") parts.push(`${summary.inserted} inserted`);
-  if (typeof summary.updated === "number") parts.push(`${summary.updated} updated`);
+  if (typeof summary.inserted === "number")
+    parts.push(`${summary.inserted} inserted`);
+  if (typeof summary.updated === "number")
+    parts.push(`${summary.updated} updated`);
   return `${label}: ${parts.join(", ") || "ok"}`;
 }
 
@@ -34,7 +37,8 @@ export function useTriggerFracFocus() {
   return useMutation<FracTriggerResponse, Error, void>({
     mutationFn: () => syncService.triggerFracFocus(),
     onSuccess: (res) => {
-      if (res.status === "already_running") toast.warning("FracFocus sync zaten çalışıyor.");
+      if (res.status === "already_running")
+        toast.warning("FracFocus sync zaten çalışıyor.");
       else toast.success("FracFocus sync started in background.");
       invalidateSync(qc);
     },

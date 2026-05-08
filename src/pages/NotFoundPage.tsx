@@ -7,7 +7,14 @@ export function NotFoundPage() {
       <EmptyState
         title="404 — Sayfa bulunamadı"
         description="Bu adres mevcut değil."
-        action={<Link to="/events" className="text-sm text-[var(--color-fg)] underline">Events sayfasına dön</Link>}
+        action={
+          <Link
+            to="/events"
+            className="text-sm text-[var(--color-fg)] underline"
+          >
+            Events sayfasına dön
+          </Link>
+        }
       />
     </div>
   );

@@ -16,7 +16,11 @@ export interface EventMarkerOut {
   html: string;
 }
 
-export function eventMarkerSvg({ id, magnitude, selected = false }: EventMarkerOpts): EventMarkerOut {
+export function eventMarkerSvg({
+  id,
+  magnitude,
+  selected = false,
+}: EventMarkerOpts): EventMarkerOut {
   const meta = magnitudeMeta(magnitude);
   const color = magHexFallback(magnitude);
   const tier = meta.tier;
@@ -56,8 +60,13 @@ export interface WellMarkerOpts {
   color?: string;
 }
 
-export function wellMarkerSvg({ intensity, color = "#ea580c" }: WellMarkerOpts) {
-  const norm = intensity ? Math.min(1, Math.log10(Math.max(1, intensity)) / 7) : 0.3;
+export function wellMarkerSvg({
+  intensity,
+  color = "#ea580c",
+}: WellMarkerOpts) {
+  const norm = intensity
+    ? Math.min(1, Math.log10(Math.max(1, intensity)) / 7)
+    : 0.3;
   const scale = 0.7 + norm * 0.85;
   const size = Math.round(20 * scale);
   const html = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
@@ -73,8 +82,13 @@ export interface FracMarkerOpts {
   color?: string;
 }
 
-export function fracMarkerSvg({ intensity, color = "#9333ea" }: FracMarkerOpts) {
-  const norm = intensity ? Math.min(1, Math.log10(Math.max(1, intensity / 1000)) / 7) : 0.3;
+export function fracMarkerSvg({
+  intensity,
+  color = "#9333ea",
+}: FracMarkerOpts) {
+  const norm = intensity
+    ? Math.min(1, Math.log10(Math.max(1, intensity / 1000)) / 7)
+    : 0.3;
   const scale = 0.7 + norm * 0.85;
   const size = Math.round(20 * scale);
   const html = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
@@ -89,7 +103,10 @@ export interface StationMarkerOpts {
   color?: string;
 }
 
-export function stationMarkerSvg({ active = true, color = "#2563eb" }: StationMarkerOpts) {
+export function stationMarkerSvg({
+  active = true,
+  color = "#2563eb",
+}: StationMarkerOpts) {
   const opacity = active ? 1 : 0.45;
   const html = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" opacity="${opacity}">
     <polygon points="12,3 22,21 2,21" fill="${color}" stroke="white" stroke-width="1.5"/>
@@ -102,7 +119,9 @@ export interface EpicenterMarkerOpts {
   color?: string;
 }
 
-export function epicenterStarSvg({ color = "#dc2626" }: EpicenterMarkerOpts = {}) {
+export function epicenterStarSvg({
+  color = "#dc2626",
+}: EpicenterMarkerOpts = {}) {
   const html = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" overflow="visible">
     <!-- Ripple 1 -->
     <circle cx="20" cy="20" r="8" fill="none" stroke="${color}" stroke-width="1.5" opacity=".6">

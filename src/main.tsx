@@ -15,18 +15,18 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-      <RouterProvider router={router} />
-      <Toaster
-        position="bottom-right"
-        toastOptions={{
-          style: {
-            background: "var(--color-card)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-fg)",
-          },
-        }}
-      />
-      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+        <RouterProvider router={router} />
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: "var(--color-card)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-fg)",
+            },
+          }}
+        />
+        {/* {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />} */}
       </TooltipProvider>
     </QueryClientProvider>
   </React.StrictMode>,

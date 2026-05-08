@@ -2,10 +2,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Slider } from "@/components/ui/Slider";
 import { Button } from "@/components/ui/Button";
 import { Tooltip } from "@/components/ui/Tooltip";
-import {
-  DEFAULT_ANALYSIS_PARAMS,
-  type AnalysisParams,
-} from "@/types/api";
+import { DEFAULT_ANALYSIS_PARAMS, type AnalysisParams } from "@/types/api";
 import { humanDays } from "@/lib/format";
 
 export interface AnalysisParamsPanelProps {
@@ -29,7 +26,14 @@ interface SliderRow {
 }
 
 const ROWS: SliderRow[] = [
-  { key: "swd_radius_km", label: "SWD Search Radius", min: 1, max: 200, step: 1, unit: "km" },
+  {
+    key: "swd_radius_km",
+    label: "SWD Search Radius",
+    min: 1,
+    max: 200,
+    step: 1,
+    unit: "km",
+  },
   {
     key: "swd_window_days",
     label: "SWD Lookback",
@@ -39,7 +43,14 @@ const ROWS: SliderRow[] = [
     unit: "gün",
     hint: humanDays,
   },
-  { key: "frac_radius_km", label: "Frac Search Radius", min: 1, max: 200, step: 1, unit: "km" },
+  {
+    key: "frac_radius_km",
+    label: "Frac Search Radius",
+    min: 1,
+    max: 200,
+    step: 1,
+    unit: "km",
+  },
   {
     key: "frac_window_days",
     label: "Frac Lookback",
@@ -49,7 +60,14 @@ const ROWS: SliderRow[] = [
     unit: "gün",
     hint: humanDays,
   },
-  { key: "station_radius_km", label: "Station Search Radius", min: 5, max: 500, step: 5, unit: "km" },
+  {
+    key: "station_radius_km",
+    label: "Station Search Radius",
+    min: 5,
+    max: 500,
+    step: 5,
+    unit: "km",
+  },
 ];
 
 export function AnalysisParamsPanel({
@@ -61,7 +79,8 @@ export function AnalysisParamsPanel({
   analyzing,
   disabled,
 }: AnalysisParamsPanelProps) {
-  const set = (key: keyof AnalysisParams, v: number) => onChange({ ...value, [key]: v });
+  const set = (key: keyof AnalysisParams, v: number) =>
+    onChange({ ...value, [key]: v });
 
   return (
     <Card className="flex flex-col">
@@ -86,11 +105,16 @@ export function AnalysisParamsPanel({
           return (
             <div key={row.key}>
               <div className="mb-2 flex items-end justify-between gap-2">
-                <span className="text-xs font-medium text-[var(--color-fg)]">{row.label}</span>
+                <span className="text-xs font-medium text-[var(--color-fg)]">
+                  {row.label}
+                </span>
                 <span className="font-mono text-xs text-[var(--color-fg)]">
-                  {v} <span className="text-[var(--color-muted)]">{row.unit}</span>
+                  {v}{" "}
+                  <span className="text-[var(--color-muted)]">{row.unit}</span>
                   {row.hint ? (
-                    <span className="ml-1 text-[10px] text-[var(--color-subtle)]">{row.hint(v)}</span>
+                    <span className="ml-1 text-[10px] text-[var(--color-subtle)]">
+                      {row.hint(v)}
+                    </span>
                   ) : null}
                 </span>
               </div>

@@ -10,7 +10,12 @@ import {
   useSwdLayer,
 } from "@/lib/map/useNearbyLayers";
 import { Switch } from "@/components/ui/Switch";
-import type { EventContext } from "@/types/api";
+import type {
+  EventContext,
+  NearbyFracJob,
+  NearbyStation,
+  NearbySwdWell,
+} from "@/types/api";
 
 export interface ContextMapProps {
   context: EventContext | undefined | null;
@@ -18,13 +23,33 @@ export interface ContextMapProps {
   /** Event lat/lon — used to center map before context loads. */
   eventLat?: number;
   eventLon?: number;
+  focusedSwdWell?: { uic: string; requestId: number } | null;
+  focusedFracJob?: { id: string; requestId: number } | null;
+  focusedStation?: { id: string; requestId: number } | null;
+  onSwdWellClick?: (well: NearbySwdWell) => void;
+  onFracJobClick?: (job: NearbyFracJob) => void;
+  onStationClick?: (station: NearbyStation) => void;
+  onMapClick?: () => void;
 }
 
-export function ContextMap({ context, loading, eventLat, eventLon }: ContextMapProps) {
+export function ContextMap({
+  context,
+  loading,
+  eventLat,
+  eventLon,
+  focusedSwdWell,
+  focusedFracJob,
+  focusedStation,
+  onSwdWellClick,
+  onFracJobClick,
+  onStationClick,
+  onMapClick,
+}: ContextMapProps) {
   const { theme } = useTheme();
   const [variant, setVariant] = useState<"dark" | "light" | "satellite">(() => {
     const saved = localStorage.getItem("seismic-map-variant");
-    if (saved === "dark" || saved === "light" || saved === "satellite") return saved as any;
+    if (saved === "dark" || saved === "light" || saved === "satellite")
+      return saved as any;
     return theme;
   });
 
@@ -50,6 +75,17 @@ export function ContextMap({ context, loading, eventLat, eventLon }: ContextMapP
     }
   }, [theme]);
 
+  useEffect(() => {
+    if (focusedSwdWell || focusedFracJob || focusedStation) {
+      setShow((current) => ({
+        ...current,
+        swdPins: focusedSwdWell ? true : current.swdPins,
+        fracPins: focusedFracJob ? true : current.fracPins,
+        stationPins: focusedStation ? true : current.stationPins,
+      }));
+    }
+  }, [focusedSwdWell, focusedFracJob, focusedStation]);
+
   const modes: { id: typeof variant; label: string }[] = [
     { id: "dark", label: "Dark" },
     { id: "light", label: "Light" },
@@ -62,9 +98,26 @@ export function ContextMap({ context, loading, eventLat, eventLon }: ContextMapP
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)]">
-      <MapBase initialCenter={initialCenter} initialZoom={initialZoom} variant={variant}>
+      <MapBase
+        initialCenter={initialCenter}
+        initialZoom={initialZoom}
+        variant={variant}
+      >
         {(map) => (
-          <ContextLayers map={map} context={context} show={show} eventLat={eventLat} eventLon={eventLon} />
+          <ContextLayers
+            map={map}
+            context={context}
+            show={show}
+            eventLat={eventLat}
+            eventLon={eventLon}
+            focusedSwdWell={focusedSwdWell}
+            focusedFracJob={focusedFracJob}
+            focusedStation={focusedStation}
+            onSwdWellClick={onSwdWellClick}
+            onFracJobClick={onFracJobClick}
+            onStationClick={onStationClick}
+            onMapClick={onMapClick}
+          />
         )}
       </MapBase>
 
@@ -76,8 +129,8 @@ export function ContextMap({ context, loading, eventLat, eventLon }: ContextMapP
               key={m.id}
               onClick={() => setVariant(m.id)}
               className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${
-                variant === m.id 
-                  ? "bg-[var(--color-accent)] text-white shadow-sm" 
+                variant === m.id
+                  ? "bg-[var(--color-accent)] text-white shadow-sm"
                   : "text-[var(--color-muted)] hover:text-[var(--color-fg)]"
               }`}
             >
@@ -88,14 +141,16 @@ export function ContextMap({ context, loading, eventLat, eventLon }: ContextMapP
       </div>
 
       {context ? <Legend /> : null}
-      <OptionsPanel 
-        show={show} 
-        onChange={setShow} 
-        disabled={!context || loading} 
+      <OptionsPanel
+        show={show}
+        onChange={setShow}
+        disabled={!context || loading}
         onRecenter={() => {
           if (eventLat != null && eventLon != null) {
             // Force a re-center if things slip
-            window.dispatchEvent(new CustomEvent('map-recenter', { detail: [eventLat, eventLon] }));
+            window.dispatchEvent(
+              new CustomEvent("map-recenter", { detail: [eventLat, eventLon] }),
+            );
           }
         }}
       />
@@ -126,12 +181,26 @@ function ContextLayers({
   show,
   eventLat,
   eventLon,
+  focusedSwdWell,
+  focusedFracJob,
+  focusedStation,
+  onSwdWellClick,
+  onFracJobClick,
+  onStationClick,
+  onMapClick,
 }: {
   map: LMap;
   context: EventContext | undefined | null;
   show: ShowState;
   eventLat?: number;
   eventLon?: number;
+  focusedSwdWell?: { uic: string; requestId: number } | null;
+  focusedFracJob?: { id: string; requestId: number } | null;
+  focusedStation?: { id: string; requestId: number } | null;
+  onSwdWellClick?: (well: NearbySwdWell) => void;
+  onFracJobClick?: (job: NearbyFracJob) => void;
+  onStationClick?: (station: NearbyStation) => void;
+  onMapClick?: () => void;
 }) {
   // Fly to event as soon as coordinates are known — before context/preview loads
   useEffect(() => {
@@ -139,7 +208,19 @@ function ContextLayers({
     map.flyTo([eventLat, eventLon], 10, { duration: 0.8 });
   }, [map, eventLat, eventLon]);
 
-  useEpicenter({ map, lat: context?.event_latitude ?? null, lon: context?.event_longitude ?? null });
+  useEffect(() => {
+    if (!map || !onMapClick) return;
+    map.on("click", onMapClick);
+    return () => {
+      map.off("click", onMapClick);
+    };
+  }, [map, onMapClick]);
+
+  useEpicenter({
+    map,
+    lat: context?.event_latitude ?? null,
+    lon: context?.event_longitude ?? null,
+  });
   useRadiusRings({
     map,
     centerLat: context?.event_latitude ?? null,
@@ -149,16 +230,36 @@ function ContextLayers({
     stationRadiusKm: context?.station_radius_km,
     show: { swd: show.swdRing, frac: show.fracRing, station: show.stationRing },
   });
-  useSwdLayer({ map, wells: context?.nearby_swd_wells ?? [], visible: show.swdPins });
-  useFracLayer({ map, jobs: context?.nearby_frac_jobs ?? [], visible: show.fracPins });
-  useStationsLayer({ map, stations: context?.nearby_stations ?? [], visible: show.stationPins });
+  useSwdLayer({
+    map,
+    wells: context?.nearby_swd_wells ?? [],
+    visible: show.swdPins,
+    focusedWell: focusedSwdWell,
+    onWellClick: onSwdWellClick,
+  });
+  useFracLayer({
+    map,
+    jobs: context?.nearby_frac_jobs ?? [],
+    visible: show.fracPins,
+    focusedFracJob,
+    onJobClick: onFracJobClick,
+  });
+  useStationsLayer({
+    map,
+    stations: context?.nearby_stations ?? [],
+    visible: show.stationPins,
+    focusedStation,
+    onStationClick,
+  });
   return null;
 }
 
 function Legend() {
   return (
     <div className="pointer-events-none absolute bottom-4 left-4 z-[800] w-[200px] space-y-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/95 p-3 shadow-[var(--shadow-soft)] backdrop-blur">
-      <p className="text-[9px] font-bold uppercase tracking-[.12em] text-[var(--color-muted)]">Legend</p>
+      <p className="text-[9px] font-bold uppercase tracking-[.12em] text-[var(--color-muted)]">
+        Legend
+      </p>
       <Item color="#dc2626" label="Epicenter" shape="target" />
       <Item color="#ea580c" label="SWD well ◆" shape="diamond" />
       <Item color="#9333ea" label="Frac job ▢" shape="square" />
@@ -167,7 +268,15 @@ function Legend() {
   );
 }
 
-function Item({ color, label, shape }: { color: string; label: string; shape: "star" | "diamond" | "square" | "triangle" | "target" }) {
+function Item({
+  color,
+  label,
+  shape,
+}: {
+  color: string;
+  label: string;
+  shape: "star" | "diamond" | "square" | "triangle" | "target";
+}) {
   return (
     <div className="flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
       <span
@@ -206,7 +315,12 @@ function OptionsPanel({
   const Row = ({ k, label }: { k: keyof ShowState; label: string }) => (
     <label className="flex cursor-pointer items-center justify-between gap-2 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors">
       <span>{label}</span>
-      <Switch checked={show[k]} onCheckedChange={(v) => set(k, v)} disabled={disabled} ariaLabel={label} />
+      <Switch
+        checked={show[k]}
+        onCheckedChange={(v) => set(k, v)}
+        disabled={disabled}
+        ariaLabel={label}
+      />
     </label>
   );
 
@@ -216,7 +330,7 @@ function OptionsPanel({
         <p className="text-[9px] font-bold uppercase tracking-[.12em] text-[var(--color-muted)]">
           Map layers
         </p>
-        <button 
+        <button
           onClick={onRecenter}
           disabled={disabled}
           className="text-[9px] font-bold uppercase text-[var(--color-accent)] hover:underline disabled:opacity-50"

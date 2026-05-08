@@ -8,12 +8,12 @@ The backend pulls data from five sources, stores everything in a local SQLite da
 
 There are **five functional areas** in the UI:
 
-| Area | What It Shows |
-|---|---|
-| **Dashboard** | System health — what data has been loaded, when |
-| **Seismic Events** | Map + list of earthquakes in the region |
-| **SWD Wells** | Saltwater disposal injection wells |
-| **FracFocus** | Hydraulic fracturing job disclosures |
+| Area               | What It Shows                                                                                 |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| **Dashboard**      | System health — what data has been loaded, when                                               |
+| **Seismic Events** | Map + list of earthquakes in the region                                                       |
+| **SWD Wells**      | Saltwater disposal injection wells                                                            |
+| **FracFocus**      | Hydraulic fracturing job disclosures                                                          |
 | **Event Analysis** | The core feature — pick an earthquake, see which nearby wells or frac jobs may have caused it |
 
 ---
@@ -21,30 +21,39 @@ There are **five functional areas** in the UI:
 ## Technical Setup
 
 ### Base URL
+
 ```
 http://localhost:8000
 ```
+
 All endpoints are prefixed with `/api/v1`.
 
 ### CORS
+
 The backend does **not** configure CORS headers. During development, either:
+
 - Run your dev server on the same origin, or
 - Add a proxy in your dev config (e.g. Vite: `proxy: { '/api': 'http://localhost:8000' }`), or
 - Ask the backend to add `CORSMiddleware` for your dev origin.
 
 ### Authentication
+
 None. No API keys, no tokens. Every endpoint is open.
 
 ### Response format
+
 All responses are JSON. All timestamps are **UTC ISO 8601** strings (e.g. `"2024-03-15T14:22:00"`).
 
 ### Health check
+
 ```http
 GET /health
 ```
+
 ```json
 { "status": "ok" }
 ```
+
 Use this to check if the backend is running.
 
 ---
@@ -62,10 +71,12 @@ GET /api/v1/sync/history?limit=50
 ```
 
 Optional filters:
+
 - `source` — one of `fracfocus`, `uic`, `h10`, `texnet`, `usgs`, `iris`
 - `status` — one of `pending`, `running`, `success`, `failed`, `skipped`
 
 **Response:**
+
 ```json
 {
   "total": 12,
@@ -88,24 +99,24 @@ Optional filters:
 
 **Status badge colors:**
 
-| Status | Color |
-|---|---|
-| `success` | Green |
+| Status    | Color          |
+| --------- | -------------- |
+| `success` | Green          |
 | `running` | Blue (animate) |
-| `failed` | Red |
-| `skipped` | Gray |
-| `pending` | Yellow |
+| `failed`  | Red            |
+| `skipped` | Gray           |
+| `pending` | Yellow         |
 
 **Sources — human-readable labels:**
 
-| `source` value | Display name |
-|---|---|
-| `fracfocus` | FracFocus (Frac Disclosures) |
-| `uic` | SWD Wells (UIC Inventory) |
-| `h10` | SWD Monthly Monitor (H-10) |
-| `texnet` | TexNet Seismic Catalog |
-| `usgs` | USGS Seismic Catalog |
-| `iris` | IRIS Seismic Stations |
+| `source` value | Display name                 |
+| -------------- | ---------------------------- |
+| `fracfocus`    | FracFocus (Frac Disclosures) |
+| `uic`          | SWD Wells (UIC Inventory)    |
+| `h10`          | SWD Monthly Monitor (H-10)   |
+| `texnet`       | TexNet Seismic Catalog       |
+| `usgs`         | USGS Seismic Catalog         |
+| `iris`         | IRIS Seismic Stations        |
 
 ---
 
@@ -118,6 +129,7 @@ GET /api/v1/sync/status
 ```
 
 **Response:**
+
 ```json
 {
   "zip_url": "https://www.fracfocusdata.org/...",
@@ -143,16 +155,17 @@ Display `last_sync_status` as a badge, `last_sync_at` as a relative time ("3 day
 
 These buttons kick off data ingestion. They are long-running — show a spinner and poll sync history until status changes from `running` to `success`/`failed`.
 
-| Button | Endpoint | Notes |
-|---|---|---|
-| Load FracFocus | `POST /api/v1/sync/trigger` | Background task — poll `/sync/history?source=fracfocus` |
-| Load TexNet Events | `POST /api/v1/seismic/texnet/fetch` | Optional `?min_magnitude=2.5` |
-| Load USGS Events | `POST /api/v1/seismic/usgs/fetch` | Optional `?min_magnitude=1.5` |
-| Load IRIS Stations | `POST /api/v1/seismic/iris/stations/fetch` | No params |
-| Load SWD Wells | `POST /api/v1/swd/uic/fetch` | Can take minutes — resumable |
-| Load SWD Monitor | `POST /api/v1/swd/h10/fetch` | Run after SWD Wells |
+| Button             | Endpoint                                   | Notes                                                   |
+| ------------------ | ------------------------------------------ | ------------------------------------------------------- |
+| Load FracFocus     | `POST /api/v1/sync/trigger`                | Background task — poll `/sync/history?source=fracfocus` |
+| Load TexNet Events | `POST /api/v1/seismic/texnet/fetch`        | Optional `?min_magnitude=2.5`                           |
+| Load USGS Events   | `POST /api/v1/seismic/usgs/fetch`          | Optional `?min_magnitude=1.5`                           |
+| Load IRIS Stations | `POST /api/v1/seismic/iris/stations/fetch` | No params                                               |
+| Load SWD Wells     | `POST /api/v1/swd/uic/fetch`               | Can take minutes — resumable                            |
+| Load SWD Monitor   | `POST /api/v1/swd/h10/fetch`               | Run after SWD Wells                                     |
 
 **FracFocus trigger response** (unique — runs in background):
+
 ```json
 {
   "message": "Sync started",
@@ -160,9 +173,11 @@ These buttons kick off data ingestion. They are long-running — show a spinner 
   "status": "started"
 }
 ```
+
 If already running: `"status": "already_running"` — show a warning, not an error.
 
 **All other trigger responses** return immediately with a summary:
+
 ```json
 {
   "status": "success",
@@ -186,11 +201,13 @@ GET /api/v1/seismic/events?page=1&page_size=50
 ```
 
 Optional filters:
+
 - `source` — `texnet` | `usgs`
 - `county` — e.g. `"Reeves"` (case-insensitive, TexNet only)
 - `min_magnitude` — e.g. `2.5`
 
 **Response:**
+
 ```json
 {
   "total": 1423,
@@ -224,24 +241,24 @@ Optional filters:
 
 **Key fields to display:**
 
-| Field | Display label | Notes |
-|---|---|---|
-| `event_id` | ID | Clickable — links to Event Analysis |
-| `magnitude` | Mag | Color-code: <2=gray, 2-3=yellow, 3-4=orange, 4+=red |
-| `mag_type` | Type | Show in small text next to magnitude |
-| `event_date` | Date/Time | Format as local time with UTC label |
-| `depth` | Depth (km) | How far underground the earthquake happened |
-| `latitude` / `longitude` | Location | Use for map pin |
-| `county_name` | County | TexNet events only; USGS shows `place` instead |
-| `source` | Source | Badge: `TexNet` or `USGS` |
-| `evaluation_status` | Status | TexNet: `final`/`preliminary`; USGS: `reviewed`/`automatic` |
+| Field                    | Display label | Notes                                                       |
+| ------------------------ | ------------- | ----------------------------------------------------------- |
+| `event_id`               | ID            | Clickable — links to Event Analysis                         |
+| `magnitude`              | Mag           | Color-code: <2=gray, 2-3=yellow, 3-4=orange, 4+=red         |
+| `mag_type`               | Type          | Show in small text next to magnitude                        |
+| `event_date`             | Date/Time     | Format as local time with UTC label                         |
+| `depth`                  | Depth (km)    | How far underground the earthquake happened                 |
+| `latitude` / `longitude` | Location      | Use for map pin                                             |
+| `county_name`            | County        | TexNet events only; USGS shows `place` instead              |
+| `source`                 | Source        | Badge: `TexNet` or `USGS`                                   |
+| `evaluation_status`      | Status        | TexNet: `final`/`preliminary`; USGS: `reviewed`/`automatic` |
 
 **Fields only relevant to specific sources:**
 
-| Field | Source | Meaning |
-|---|---|---|
-| `county_name`, `region_name`, `station_count`, `phase_count` | TexNet only | Location data |
-| `place`, `title`, `alternate_ids`, `gap` | USGS only | Location label, cross-catalog IDs, location uncertainty |
+| Field                                                        | Source      | Meaning                                                 |
+| ------------------------------------------------------------ | ----------- | ------------------------------------------------------- |
+| `county_name`, `region_name`, `station_count`, `phase_count` | TexNet only | Location data                                           |
+| `place`, `title`, `alternate_ids`, `gap`                     | USGS only   | Location label, cross-catalog IDs, location uncertainty |
 
 ---
 
@@ -269,6 +286,7 @@ GET /api/v1/swd/wells?page=1&page_size=50
 ```
 
 **Response:**
+
 ```json
 {
   "total": 892,
@@ -293,15 +311,15 @@ GET /api/v1/swd/wells?page=1&page_size=50
 
 **Key fields to display:**
 
-| Field | Display label | Notes |
-|---|---|---|
-| `uic_number` | UIC # | Unique ID — use as link |
-| `api_no` | API # | Standard well identifier in US |
-| `latitude` / `longitude` | Location | Map pin |
+| Field                           | Display label       | Notes                              |
+| ------------------------------- | ------------------- | ---------------------------------- |
+| `uic_number`                    | UIC #               | Unique ID — use as link            |
+| `api_no`                        | API #               | Standard well identifier in US     |
+| `latitude` / `longitude`        | Location            | Map pin                            |
 | `top_inj_zone` / `bot_inj_zone` | Injection zone (ft) | How deep they inject — in **feet** |
-| `max_liq_inj_pressure` | Max Pressure (psi) | Regulatory limit |
-| `activated_flag` | Active | Boolean — show as badge |
-| `lease_name` | Lease | Location name |
+| `max_liq_inj_pressure`          | Max Pressure (psi)  | Regulatory limit                   |
+| `activated_flag`                | Active              | Boolean — show as badge            |
+| `lease_name`                    | Lease               | Location name                      |
 
 ---
 
@@ -314,6 +332,7 @@ GET /api/v1/swd/monitoring?uic_no=UIC-12345&page=1&page_size=24
 ```
 
 **Response:**
+
 ```json
 {
   "total": 48,
@@ -348,10 +367,12 @@ GET /api/v1/data/?page=1&page_size=50
 ```
 
 Optional filters:
+
 - `state` — e.g. `"Texas"` (exact match)
 - `operator` — e.g. `"Pioneer"` (partial match)
 
 **Response:**
+
 ```json
 {
   "total": 35000,
@@ -380,17 +401,17 @@ Optional filters:
 
 **Key columns to display:**
 
-| Column | Display label | Notes |
-|---|---|---|
-| `api10` | API # | Standard well identifier |
-| `operatorname` | Operator | Company that did the frac job |
-| `wellname` | Well | Well name |
-| `jobstartdate` | Start Date | When fracking began |
-| `jobenddate` | End Date | When fracking ended |
-| `tvddepth` | Depth (ft) | True vertical depth — how deep |
-| `totalbasewatervolume` | Water Used (gal) | Millions of gallons — divide by 42 to get barrels |
-| `latitude` / `longitude` | Location | Map pin |
-| `countyname` | County | Texas county |
+| Column                   | Display label    | Notes                                             |
+| ------------------------ | ---------------- | ------------------------------------------------- |
+| `api10`                  | API #            | Standard well identifier                          |
+| `operatorname`           | Operator         | Company that did the frac job                     |
+| `wellname`               | Well             | Well name                                         |
+| `jobstartdate`           | Start Date       | When fracking began                               |
+| `jobenddate`             | End Date         | When fracking ended                               |
+| `tvddepth`               | Depth (ft)       | True vertical depth — how deep                    |
+| `totalbasewatervolume`   | Water Used (gal) | Millions of gallons — divide by 42 to get barrels |
+| `latitude` / `longitude` | Location         | Map pin                                           |
+| `countyname`             | County           | Texas county                                      |
 
 ---
 
@@ -401,22 +422,27 @@ Get distinct values for filter dropdowns:
 ```http
 GET /api/v1/data/distinct/statename
 ```
+
 ```json
 { "column": "statename", "count": 4, "values": ["Texas", "New Mexico", ...] }
 ```
 
 Get count breakdown:
+
 ```http
 GET /api/v1/data/group/operatorname
 ```
+
 ```json
 { "column": "operatorname", "groups": [{ "value": "Pioneer Natural Resources", "count": 1240 }, ...] }
 ```
 
 Get total record count:
+
 ```http
 GET /api/v1/data/stats
 ```
+
 ```json
 { "total_records": 35421 }
 ```
@@ -428,6 +454,7 @@ GET /api/v1/data/stats
 This is the most important part of the app. A user picks a seismic event and asks: **"What caused this earthquake?"**
 
 The flow is:
+
 1. User selects an event (from the map or list)
 2. User optionally adjusts search parameters (radius, time window)
 3. User clicks **"Preview Context"** to see what nearby wells/frac jobs exist (no data saved)
@@ -444,6 +471,7 @@ GET /api/v1/analysis/events/{event_id}/context
 ```
 
 Optional query params (all have defaults):
+
 - `swd_radius_km` (default: 20) — how far to search for SWD wells
 - `swd_window_days` (default: 3650) — how many days back to look for injection activity (10 years)
 - `frac_radius_km` (default: 10) — how far to search for frac jobs
@@ -451,6 +479,7 @@ Optional query params (all have defaults):
 - `station_radius_km` (default: 50) — how far to search for seismic stations
 
 **Response:**
+
 ```json
 {
   "event_id": "tx2024abc",
@@ -514,6 +543,7 @@ Optional query params (all have defaults):
 **What to show:**
 
 **Context Map:**
+
 - Center on the earthquake epicenter (star icon)
 - Draw radius circles (SWD radius, frac radius, station radius — toggleable)
 - SWD wells as orange pins — size = cumulative injection volume
@@ -522,37 +552,37 @@ Optional query params (all have defaults):
 
 **SWD Wells Table:**
 
-| Column | Display | Notes |
-|---|---|---|
-| `uic_number` | Well ID | |
-| `distance_km` | Distance | Sort ascending by default |
-| `cumulative_bbl` | Total Injected (bbl) | Format with commas |
-| `avg_pressure_psi` | Avg Pressure (psi) | |
-| `top_inj_zone` / `bot_inj_zone` | Injection Zone (ft) | Show as range "8,000 – 9,200 ft" |
-| `last_report_date` | Last Active | |
-| `rate_change_ratio` | Rate Change | >1 = ramping up (red), <1 = slowing down (green). `null` = unknown |
+| Column                          | Display              | Notes                                                              |
+| ------------------------------- | -------------------- | ------------------------------------------------------------------ |
+| `uic_number`                    | Well ID              |                                                                    |
+| `distance_km`                   | Distance             | Sort ascending by default                                          |
+| `cumulative_bbl`                | Total Injected (bbl) | Format with commas                                                 |
+| `avg_pressure_psi`              | Avg Pressure (psi)   |                                                                    |
+| `top_inj_zone` / `bot_inj_zone` | Injection Zone (ft)  | Show as range "8,000 – 9,200 ft"                                   |
+| `last_report_date`              | Last Active          |                                                                    |
+| `rate_change_ratio`             | Rate Change          | >1 = ramping up (red), <1 = slowing down (green). `null` = unknown |
 
 **`rate_change_ratio` explanation for UI tooltip:** "Compares injection in the 3 months before the earthquake vs. the 9 months before that. A value of 2.3 means injection nearly doubled recently."
 
 **Frac Jobs Table:**
 
-| Column | Display | Notes |
-|---|---|---|
-| `api_number` | API # | |
-| `operator_name` | Operator | |
-| `distance_km` | Distance | |
-| `job_start_date` | Frac Date | |
+| Column               | Display          | Notes                             |
+| -------------------- | ---------------- | --------------------------------- |
+| `api_number`         | API #            |                                   |
+| `operator_name`      | Operator         |                                   |
+| `distance_km`        | Distance         |                                   |
+| `job_start_date`     | Frac Date        |                                   |
 | `total_water_volume` | Water Used (gal) | Large number — format with commas |
-| `formation_depth` | Depth (ft) | |
+| `formation_depth`    | Depth (ft)       |                                   |
 
 **Stations Table:**
 
-| Column | Display | Notes |
-|---|---|---|
-| `network_station` | Station | e.g. `TX.ELK` |
-| `site_name` | Name | |
-| `distance_km` | Distance | |
-| `end_time` | Status | `null` = Active (green badge), otherwise "Decommissioned" |
+| Column            | Display  | Notes                                                     |
+| ----------------- | -------- | --------------------------------------------------------- |
+| `network_station` | Station  | e.g. `TX.ELK`                                             |
+| `site_name`       | Name     |                                                           |
+| `distance_km`     | Distance |                                                           |
+| `end_time`        | Status   | `null` = Active (green badge), otherwise "Decommissioned" |
 
 ---
 
@@ -565,6 +595,7 @@ POST /api/v1/analysis/events/{event_id}/analyze
 Same optional query params as the context endpoint above.
 
 **Response:**
+
 ```json
 {
   "snapshot_id": 42,
@@ -599,13 +630,13 @@ Same optional query params as the context endpoint above.
 
 **Verdict Banner:**
 
-| `likely_driver` | `confidence` | What to show |
-|---|---|---|
-| `swd` | ≥ 0.75 | "Likely caused by saltwater disposal" (high confidence, red banner) |
-| `swd` | 0.5–0.75 | "Possibly caused by saltwater disposal" (medium, orange) |
-| `frac` | ≥ 0.75 | "Likely caused by hydraulic fracturing" (high, purple) |
-| `frac` | 0.5–0.75 | "Possibly caused by hydraulic fracturing" (medium, orange) |
-| `indeterminate` | any | "Cause unclear — insufficient evidence" (gray) |
+| `likely_driver` | `confidence` | What to show                                                        |
+| --------------- | ------------ | ------------------------------------------------------------------- |
+| `swd`           | ≥ 0.75       | "Likely caused by saltwater disposal" (high confidence, red banner) |
+| `swd`           | 0.5–0.75     | "Possibly caused by saltwater disposal" (medium, orange)            |
+| `frac`          | ≥ 0.75       | "Likely caused by hydraulic fracturing" (high, purple)              |
+| `frac`          | 0.5–0.75     | "Possibly caused by hydraulic fracturing" (medium, orange)          |
+| `indeterminate` | any          | "Cause unclear — insufficient evidence" (gray)                      |
 
 Show `confidence` as a percentage: `0.87 → 87% confidence`.
 
@@ -621,6 +652,7 @@ Calculated as `swd_score / (swd_score + frac_score)`.
 **Signals List** (ranked — highest value first, already sorted by API):
 
 For each signal, parse the `description` string and display as a card:
+
 - Signal name (`SWD UIC-12345` or `FRAC 42-389-...`)
 - Weighted score value + unit
 - The description text as-is (it is human-readable)
@@ -637,13 +669,13 @@ For each signal, parse the `description` string and display as a card:
 
 Expose these as sliders or inputs in a collapsible "Advanced Settings" panel:
 
-| Parameter | Label | Default | Min | Max | Unit |
-|---|---|---|---|---|---|
-| `swd_radius_km` | SWD Search Radius | 20 | 0 | 200 | km |
-| `swd_window_days` | SWD Lookback | 3650 | 1 | 36500 | days |
-| `frac_radius_km` | Frac Search Radius | 10 | 0 | 200 | km |
-| `frac_window_days` | Frac Lookback | 730 | 1 | 36500 | days |
-| `station_radius_km` | Station Search Radius | 50 | 0 | 500 | km |
+| Parameter           | Label                 | Default | Min | Max   | Unit |
+| ------------------- | --------------------- | ------- | --- | ----- | ---- |
+| `swd_radius_km`     | SWD Search Radius     | 20      | 0   | 200   | km   |
+| `swd_window_days`   | SWD Lookback          | 3650    | 1   | 36500 | days |
+| `frac_radius_km`    | Frac Search Radius    | 10      | 0   | 200   | km   |
+| `frac_window_days`  | Frac Lookback         | 730     | 1   | 36500 | days |
+| `station_radius_km` | Station Search Radius | 50      | 0   | 500   | km   |
 
 Show human-friendly equivalents: `3650 days ≈ 10 years`, `730 days ≈ 2 years`.
 
@@ -658,10 +690,12 @@ GET /api/v1/seismic/iris/stations?page=1&page_size=50
 ```
 
 Optional filters:
+
 - `network` — e.g. `TX`, `N4`, `IU`
 - `active_only=true` — only stations currently operating
 
 **Response:**
+
 ```json
 {
   "total": 48,
@@ -713,13 +747,14 @@ GET /api/v1/seismic/events?page=1&page_size=50
 
 ## Error Handling
 
-| HTTP Status | When it happens | What to show |
-|---|---|---|
-| `404` | Event ID not found (analysis endpoints) | "Event not found. Make sure seismic data has been loaded." |
-| `400` | Invalid column name (FracFocus distinct/group) | Show the error message — it includes valid column names |
-| `500` | Server error | "Something went wrong on the server. Check if the backend is running." |
+| HTTP Status | When it happens                                | What to show                                                           |
+| ----------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| `404`       | Event ID not found (analysis endpoints)        | "Event not found. Make sure seismic data has been loaded."             |
+| `400`       | Invalid column name (FracFocus distinct/group) | Show the error message — it includes valid column names                |
+| `500`       | Server error                                   | "Something went wrong on the server. Check if the backend is running." |
 
 All errors return JSON:
+
 ```json
 { "detail": "Event tx9999 not found" }
 ```
@@ -728,31 +763,31 @@ All errors return JSON:
 
 ## Glossary — Terms Frontend Developers Will Encounter
 
-| Term | Plain English meaning |
-|---|---|
-| **SWD / Saltwater Disposal** | A well that pumps wastewater (from oil production) deep underground |
-| **UIC** | The government registration number for an injection well |
-| **H-10** | The monthly report form SWD operators file — contains injection volume and pressure data |
-| **FracFocus** | National public database where fracking operators disclose what chemicals/water they used |
-| **Frac job** | One hydraulic fracturing operation on one well (one-time event) |
-| **Magnitude** | How strong an earthquake was. Below 2.5 = rarely felt. Above 4.0 = widely felt. |
-| **Depth (km)** | How far underground the earthquake happened. Shallow = more surface damage. |
-| **Hypocenter** | The underground point where the earthquake started |
-| **Epicenter** | The point on the surface directly above the hypocenter (what you plot on a map) |
-| **Attribution** | Which activity (SWD or frac) the algorithm thinks caused the earthquake |
-| **Heuristic engine** | The current algorithm — scores wells by distance, volume, time, depth, and rate change |
-| **TexNet** | Texas earthquake monitoring network (UT Austin) — detailed local catalog |
-| **USGS** | US Geological Survey — national earthquake catalog, historical data going back to 2000 |
-| **IRIS / EarthScope** | Organization that operates seismic sensor networks |
-| **Delaware Basin** | The geographic region this app covers — West Texas / Southeast New Mexico |
-| **bbl** | Barrel — oil-field unit of volume. 1 barrel = 42 US gallons |
-| **psi** | Pounds per square inch — unit of pressure |
-| **TVD / tvddepth** | True Vertical Depth — how deep a well goes straight down (in feet) |
-| **API number** | Standard 10-digit US well identifier. Not related to REST APIs. |
-| **RMS** | Root mean square residual — a quality indicator for earthquake location accuracy |
-| **Azimuthal gap** | The largest gap in the ring of seismic stations around an earthquake. Larger gap = less precise location. |
-| **rate_change_ratio** | Compares recent vs. prior injection rate. >1 means ramping up. <1 means slowing down. |
-| `indeterminate` | The attribution algorithm couldn't decide — not enough evidence either way |
+| Term                         | Plain English meaning                                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **SWD / Saltwater Disposal** | A well that pumps wastewater (from oil production) deep underground                                       |
+| **UIC**                      | The government registration number for an injection well                                                  |
+| **H-10**                     | The monthly report form SWD operators file — contains injection volume and pressure data                  |
+| **FracFocus**                | National public database where fracking operators disclose what chemicals/water they used                 |
+| **Frac job**                 | One hydraulic fracturing operation on one well (one-time event)                                           |
+| **Magnitude**                | How strong an earthquake was. Below 2.5 = rarely felt. Above 4.0 = widely felt.                           |
+| **Depth (km)**               | How far underground the earthquake happened. Shallow = more surface damage.                               |
+| **Hypocenter**               | The underground point where the earthquake started                                                        |
+| **Epicenter**                | The point on the surface directly above the hypocenter (what you plot on a map)                           |
+| **Attribution**              | Which activity (SWD or frac) the algorithm thinks caused the earthquake                                   |
+| **Heuristic engine**         | The current algorithm — scores wells by distance, volume, time, depth, and rate change                    |
+| **TexNet**                   | Texas earthquake monitoring network (UT Austin) — detailed local catalog                                  |
+| **USGS**                     | US Geological Survey — national earthquake catalog, historical data going back to 2000                    |
+| **IRIS / EarthScope**        | Organization that operates seismic sensor networks                                                        |
+| **Delaware Basin**           | The geographic region this app covers — West Texas / Southeast New Mexico                                 |
+| **bbl**                      | Barrel — oil-field unit of volume. 1 barrel = 42 US gallons                                               |
+| **psi**                      | Pounds per square inch — unit of pressure                                                                 |
+| **TVD / tvddepth**           | True Vertical Depth — how deep a well goes straight down (in feet)                                        |
+| **API number**               | Standard 10-digit US well identifier. Not related to REST APIs.                                           |
+| **RMS**                      | Root mean square residual — a quality indicator for earthquake location accuracy                          |
+| **Azimuthal gap**            | The largest gap in the ring of seismic stations around an earthquake. Larger gap = less precise location. |
+| **rate_change_ratio**        | Compares recent vs. prior injection rate. >1 means ramping up. <1 means slowing down.                     |
+| `indeterminate`              | The attribution algorithm couldn't decide — not enough evidence either way                                |
 
 ---
 

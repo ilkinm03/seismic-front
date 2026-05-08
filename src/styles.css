@@ -7,11 +7,11 @@
    ────────────────────────────────────────────────────────────────── */
 @theme {
   /* Surfaces */
-  --color-bg: oklch(93% 0.010 250);
+  --color-bg: oklch(93% 0.01 250);
   --color-fg: oklch(12% 0.012 260);
   --color-muted: oklch(50% 0.014 260);
-  --color-subtle: oklch(65% 0.010 260);
-  --color-border: oklch(83% 0.010 260);
+  --color-subtle: oklch(65% 0.01 260);
+  --color-border: oklch(83% 0.01 260);
   --color-border-strong: oklch(72% 0.014 260);
   --color-card: oklch(100% 0 0);
   --color-card-elevated: oklch(97% 0.006 260);
@@ -22,15 +22,15 @@
   --color-accent-fg: oklch(99% 0 0);
 
   /* Magnitude buckets — FRONTEND_GUIDE §2.1 */
-  --color-mag-low: oklch(60% 0.025 260);     /* <2 = gray */
-  --color-mag-mid: oklch(78% 0.16 90);       /* 2-3 = yellow */
-  --color-mag-high: oklch(70% 0.18 50);      /* 3-4 = orange */
-  --color-mag-extreme: oklch(58% 0.22 28);   /* 4+ = red */
+  --color-mag-low: oklch(60% 0.025 260); /* <2 = gray */
+  --color-mag-mid: oklch(78% 0.16 90); /* 2-3 = yellow */
+  --color-mag-high: oklch(70% 0.18 50); /* 3-4 = orange */
+  --color-mag-extreme: oklch(58% 0.22 28); /* 4+ = red */
 
   /* Domain colors */
-  --color-swd: oklch(65% 0.16 50);           /* orange family */
-  --color-frac: oklch(58% 0.20 295);         /* purple family */
-  --color-station: oklch(60% 0.15 235);      /* blue family */
+  --color-swd: oklch(65% 0.16 50); /* orange family */
+  --color-frac: oklch(58% 0.2 295); /* purple family */
+  --color-station: oklch(60% 0.15 235); /* blue family */
 
   /* Status palette (sync) */
   --color-status-success: oklch(65% 0.16 150);
@@ -72,7 +72,7 @@
 
   --color-mag-low: oklch(65% 0.018 260);
   --color-mag-mid: oklch(82% 0.18 90);
-  --color-mag-high: oklch(75% 0.20 50);
+  --color-mag-high: oklch(75% 0.2 50);
   --color-mag-extreme: oklch(68% 0.24 28);
 
   --color-swd: oklch(72% 0.18 50);
@@ -80,13 +80,14 @@
   --color-station: oklch(70% 0.18 235);
 
   --color-status-success: oklch(72% 0.18 150);
-  --color-status-running: oklch(70% 0.20 250);
+  --color-status-running: oklch(70% 0.2 250);
   --color-status-failed: oklch(68% 0.24 28);
   --color-status-skipped: oklch(55% 0.01 260);
   --color-status-pending: oklch(82% 0.18 90);
 
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-card: 0 0 0 1px var(--color-border), 0 1px 0 rgba(255, 255, 255, 0.02);
+  --shadow-card:
+    0 0 0 1px var(--color-border), 0 1px 0 rgba(255, 255, 255, 0.02);
   --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.55);
 }
 
@@ -143,7 +144,9 @@ table,
 /* Focus ring helper */
 .focus-ring {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent);
+  box-shadow:
+    0 0 0 2px var(--color-bg),
+    0 0 0 4px var(--color-accent);
 }
 
 /* ──────────────────────────────────────────────────────────────────
@@ -196,9 +199,9 @@ table,
 .leaflet-tile {
   filter: grayscale(0.85) contrast(0.9) brightness(1.04);
 }
-.dark .leaflet-tile {
+/* .dark .leaflet-tile {
   filter: grayscale(0.95) brightness(0.45) contrast(1.1) invert(0.92) hue-rotate(180deg);
-}
+} */
 
 .leaflet-control-zoom {
   border: 1px solid var(--color-border) !important;
@@ -229,7 +232,11 @@ table,
   padding: 0 !important;
   overflow: hidden !important;
   border: 1px solid var(--color-border) !important;
-  background: color-mix(in oklch, var(--color-card) 88%, transparent) !important;
+  background: color-mix(
+    in oklch,
+    var(--color-card) 88%,
+    transparent
+  ) !important;
   backdrop-filter: blur(12px) saturate(140%) !important;
   color: var(--color-fg) !important;
   box-shadow: var(--shadow-pop) !important;
@@ -256,7 +263,6 @@ table,
   border: 1px solid color-mix(in oklch, var(--color-border) 20%, transparent);
 }
 
-
 /* ──────────────────────────────────────────────────────────────────
    Sonner (toasts) — pick up tokens
    ────────────────────────────────────────────────────────────────── */
@@ -265,4 +271,3 @@ table,
   --normal-text: var(--color-fg);
   --normal-border: var(--color-border);
 }
-

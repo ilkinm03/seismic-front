@@ -1,5 +1,6 @@
 import type { AttributionSignal } from "@/types/api";
 import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/cn";
 import { numberFmt } from "@/lib/format";
 
 function parseDescription(desc: string) {
@@ -23,32 +24,74 @@ function depthTone(km: number): "success" | "warning" | "danger" {
   return "danger";
 }
 
-export function SignalCard({ signal, rank }: { signal: AttributionSignal; rank: number }) {
+export function SignalCard({
+  signal,
+  rank,
+  selected = false,
+  onClick,
+}: {
+  signal: AttributionSignal;
+  rank: number;
+  selected?: boolean;
+  onClick?: () => void;
+}) {
   const parsed = parseDescription(signal.description);
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card-elevated)] p-3">
+    <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-selected={selected}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        "rounded-lg border border-[var(--color-border)] bg-[var(--color-card-elevated)] p-3 transition-colors",
+        onClick
+          ? "cursor-pointer hover:border-[var(--color-border-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+          : "",
+        selected
+          ? "border-[var(--color-accent)] bg-[color-mix(in_oklch,var(--color-accent)_12%,var(--color-card-elevated))] shadow-[0_0_0_1px_var(--color-accent)]"
+          : "",
+      )}
+    >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-border)] font-mono text-[10px] font-bold text-[var(--color-muted)]">
             {rank}
           </span>
-          <span className="text-xs font-semibold text-[var(--color-fg)]">{signal.name}</span>
+          <span className="text-xs font-semibold text-[var(--color-fg)]">
+            {signal.name}
+          </span>
         </div>
         <span className="font-mono text-sm font-bold text-[var(--color-fg)]">
           {numberFmt(signal.value, { decimals: 2 })}{" "}
-          <span className="text-[10px] font-normal text-[var(--color-muted)]">{signal.unit}</span>
+          <span className="text-[10px] font-normal text-[var(--color-muted)]">
+            {signal.unit}
+          </span>
         </span>
       </div>
 
-      <p className="mb-2 text-[11px] leading-relaxed text-[var(--color-muted)]">{signal.description}</p>
+      <p className="mb-2 text-[11px] leading-relaxed text-[var(--color-muted)]">
+        {signal.description}
+      </p>
 
       <div className="flex flex-wrap gap-1">
         {parsed.distance != null && (
           <Badge tone="neutral">{parsed.distance.toFixed(1)} km</Badge>
         )}
         {parsed.depthDelta != null && (
-          <Badge tone={depthTone(parsed.depthDelta)}>Δ{parsed.depthDelta.toFixed(1)} km</Badge>
+          <Badge tone={depthTone(parsed.depthDelta)}>
+            Δ{parsed.depthDelta.toFixed(1)} km
+          </Badge>
         )}
         {parsed.rate != null && (
           <Badge tone="danger">×{parsed.rate.toFixed(2)} rate</Badge>

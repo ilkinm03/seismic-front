@@ -24,7 +24,10 @@ export function Slider({
 }: SliderProps) {
   return (
     <RSlider.Root
-      className={cn("relative flex h-5 w-full select-none items-center", className)}
+      className={cn(
+        "relative flex h-5 w-full select-none items-center",
+        className,
+      )}
       value={[value]}
       onValueChange={(v) => onValueChange(v[0] ?? 0)}
       min={min}

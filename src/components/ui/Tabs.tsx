@@ -11,13 +11,23 @@ export interface TabsProps {
 
 export function Tabs({ value, onValueChange, children, className }: TabsProps) {
   return (
-    <RTabs.Root value={value} onValueChange={onValueChange} className={cn("flex flex-col gap-3", className)}>
+    <RTabs.Root
+      value={value}
+      onValueChange={onValueChange}
+      className={cn("flex flex-col gap-3", className)}
+    >
       {children}
     </RTabs.Root>
   );
 }
 
-export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
+export function TabsList({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <RTabs.List
       className={cn(
@@ -34,10 +44,12 @@ export function TabsTrigger({
   value,
   children,
   count,
+  className,
 }: {
   value: string;
   children: ReactNode;
   count?: number | null;
+  className?: string;
 }) {
   return (
     <RTabs.Trigger
@@ -46,6 +58,7 @@ export function TabsTrigger({
         "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium tracking-tight text-[var(--color-muted)]",
         "transition-colors hover:text-[var(--color-fg)]",
         "data-[state=active]:bg-[var(--color-card)] data-[state=active]:text-[var(--color-fg)] data-[state=active]:shadow-[var(--shadow-soft)]",
+        className,
       )}
     >
       {children}
@@ -68,7 +81,10 @@ export function TabsContent({
   className?: string;
 }) {
   return (
-    <RTabs.Content value={value} className={cn("focus-visible:outline-none", className)}>
+    <RTabs.Content
+      value={value}
+      className={cn("focus-visible:outline-none", className)}
+    >
       {children}
     </RTabs.Content>
   );

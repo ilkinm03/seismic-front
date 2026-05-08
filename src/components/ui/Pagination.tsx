@@ -8,7 +8,12 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
+export function Pagination({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+}: PaginationProps) {
   const tp = totalPagesFn(total, pageSize);
   const canPrev = page > 1;
   const canNext = page < tp;
@@ -34,10 +39,11 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
             Showing
           </div>
           <div className="font-mono text-[10px] font-bold text-[var(--color-fg)]">
-            {start}-{end} <span className="opacity-40">of</span> {total.toLocaleString()}
+            {start}-{end} <span className="opacity-40">of</span>{" "}
+            {total.toLocaleString()}
           </div>
         </div>
-        
+
         <div className="flex gap-1">
           <Button
             size="sm"

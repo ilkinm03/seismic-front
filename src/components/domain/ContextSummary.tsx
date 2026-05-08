@@ -24,7 +24,10 @@ export function ContextSummary({ context }: { context: EventContext }) {
   ];
   return (
     <Card>
-      <CardHeader title="Context Summary" subtitle="Nearby records (attribution not yet run)" />
+      <CardHeader
+        title="Context Summary"
+        subtitle="Nearby records (attribution not yet run)"
+      />
       <CardBody className="grid grid-cols-3 gap-3">
         {items.map((it) => (
           <div
@@ -37,8 +40,12 @@ export function ContextSummary({ context }: { context: EventContext }) {
             >
               {it.label}
             </div>
-            <div className="font-mono text-2xl font-semibold text-[var(--color-fg)]">{it.value}</div>
-            <div className="mt-1 text-[10px] text-[var(--color-muted)]">{it.hint}</div>
+            <div className="font-mono text-2xl font-semibold text-[var(--color-fg)]">
+              {it.value}
+            </div>
+            <div className="mt-1 text-[10px] text-[var(--color-muted)]">
+              {it.hint}
+            </div>
           </div>
         ))}
       </CardBody>

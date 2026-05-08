@@ -18,7 +18,13 @@ function durationFor(run: SyncRun): string {
   return `${m}m ${s % 60}s`;
 }
 
-export function SyncHistoryTable({ runs, loading }: { runs: SyncRun[]; loading?: boolean }) {
+export function SyncHistoryTable({
+  runs,
+  loading,
+}: {
+  runs: SyncRun[];
+  loading?: boolean;
+}) {
   if (loading) {
     return (
       <div className="space-y-4 p-8">
@@ -55,7 +61,10 @@ export function SyncHistoryTable({ runs, loading }: { runs: SyncRun[]; loading?:
         </THead>
         <TBody className="divide-y divide-[var(--color-border)]/20">
           {runs.map((run) => (
-            <TR key={run.id} className="transition-colors hover:bg-[var(--color-fg)]/[0.02]">
+            <TR
+              key={run.id}
+              className="transition-colors hover:bg-[var(--color-fg)]/[0.02]"
+            >
               <TD className="px-6 py-4">
                 <SourceLabel source={run.source} />
               </TD>

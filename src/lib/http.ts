@@ -35,7 +35,10 @@ export interface RequestOptions extends Omit<RequestInit, "body"> {
   prefix?: string;
 }
 
-export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+export async function request<T>(
+  path: string,
+  opts: RequestOptions = {},
+): Promise<T> {
   const { body, prefix = API_PREFIX, headers, ...rest } = opts;
   const url = `${prefix}${path}`;
 

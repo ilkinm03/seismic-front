@@ -17,12 +17,16 @@ export interface FracFilters {
 
 export const fracfocusService = {
   listJobs: (filters: FracFilters = {}) =>
-    request<Paginated<FracJob>>(`/data/${qs(filters as Record<string, unknown>)}`),
+    request<Paginated<FracJob>>(
+      `/data/${qs(filters as Record<string, unknown>)}`,
+    ),
 
   getColumns: () => request<FracColumnsResponse>(`/data/columns`),
 
   getDistinct: (column: string) =>
-    request<FracDistinctResponse>(`/data/distinct/${encodeURIComponent(column)}`),
+    request<FracDistinctResponse>(
+      `/data/distinct/${encodeURIComponent(column)}`,
+    ),
 
   getGroup: (column: string) =>
     request<FracGroupResponse>(`/data/group/${encodeURIComponent(column)}`),

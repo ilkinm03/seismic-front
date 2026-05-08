@@ -18,7 +18,9 @@ export function BackendHealthDot() {
     <Tooltip content={message}>
       <span className="inline-flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
         <Dot color={color} pulse={!healthy} size={7} />
-        <span className="hidden font-mono sm:inline">{healthy ? "API up" : "API down"}</span>
+        <span className="hidden font-mono sm:inline">
+          {healthy ? "API up" : "API down"}
+        </span>
       </span>
     </Tooltip>
   );

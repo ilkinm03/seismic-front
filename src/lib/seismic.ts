@@ -25,7 +25,9 @@ export interface MagnitudeMeta {
   tier: 1 | 2 | 3 | 4;
 }
 
-export function magnitudeBucket(mag: number | null | undefined): MagnitudeBucket {
+export function magnitudeBucket(
+  mag: number | null | undefined,
+): MagnitudeBucket {
   if (mag == null) return "low";
   if (mag >= 4) return "severe";
   if (mag >= 3) return "strong";
@@ -69,8 +71,10 @@ export function magnitudeMeta(mag: number | null | undefined): MagnitudeMeta {
   return { bucket, ...META[bucket] };
 }
 
-export const magColor = (mag: number | null | undefined): string => magnitudeMeta(mag).color;
-export const magLabel = (mag: number | null | undefined): string => magnitudeMeta(mag).label;
+export const magColor = (mag: number | null | undefined): string =>
+  magnitudeMeta(mag).color;
+export const magLabel = (mag: number | null | undefined): string =>
+  magnitudeMeta(mag).label;
 
 /** Concrete RGB (not CSS var) for SVG marker generation — falls back when CSS var doesn't paint. */
 export function magHexFallback(mag: number | null | undefined): string {

@@ -1,10 +1,6 @@
 import L, { type Map as LMap } from "leaflet";
 import { useEffect, useRef } from "react";
-import type {
-  NearbyFracJob,
-  NearbyStation,
-  NearbySwdWell,
-} from "@/types/api";
+import type { NearbyFracJob, NearbyStation, NearbySwdWell } from "@/types/api";
 import {
   epicenterStarSvg,
   fracMarkerSvg,
@@ -12,6 +8,9 @@ import {
   wellMarkerSvg,
 } from "@/lib/map/markers";
 import { numberFmt } from "@/lib/format";
+import { fracJobKey } from "@/lib/contextKeys";
+
+const RESTORE_FOCUSED_CONTEXT_POPUP = "context-restore-focused-popup";
 
 export interface UseEpicenterOpts {
   map: LMap | null;
@@ -20,7 +19,12 @@ export interface UseEpicenterOpts {
   flyTo?: boolean;
 }
 
-export function useEpicenter({ map, lat, lon, flyTo = true }: UseEpicenterOpts) {
+export function useEpicenter({
+  map,
+  lat,
+  lon,
+  flyTo = true,
+}: UseEpicenterOpts) {
   const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
@@ -33,7 +37,7 @@ export function useEpicenter({ map, lat, lon, flyTo = true }: UseEpicenterOpts) 
       map.invalidateSize();
     };
 
-    window.addEventListener('map-recenter', handleRecenter);
+    window.addEventListener("map-recenter", handleRecenter);
 
     if (markerRef.current) {
       markerRef.current.remove();
@@ -48,9 +52,11 @@ export function useEpicenter({ map, lat, lon, flyTo = true }: UseEpicenterOpts) 
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
     });
-    const marker = L.marker([lat, lon], { icon, zIndexOffset: 2000 }).addTo(map);
+    const marker = L.marker([lat, lon], { icon, zIndexOffset: 2000 }).addTo(
+      map,
+    );
     markerRef.current = marker;
-    
+
     // Initial flyTo only if it's the first load or coordinates changed
     if (flyTo) {
       // Delay slightly to allow any layout transitions (like panels opening) to finish
@@ -61,7 +67,7 @@ export function useEpicenter({ map, lat, lon, flyTo = true }: UseEpicenterOpts) 
     }
 
     return () => {
-      window.removeEventListener('map-recenter', handleRecenter);
+      window.removeEventListener("map-recenter", handleRecenter);
       marker.remove();
       markerRef.current = null;
     };
@@ -72,10 +78,19 @@ export interface UseSwdLayerOpts {
   map: LMap | null;
   wells: NearbySwdWell[];
   visible?: boolean;
+  focusedWell?: { uic: string; requestId: number } | null;
+  onWellClick?: (well: NearbySwdWell) => void;
 }
 
-export function useSwdLayer({ map, wells, visible = true }: UseSwdLayerOpts) {
+export function useSwdLayer({
+  map,
+  wells,
+  visible = true,
+  focusedWell,
+  onWellClick,
+}: UseSwdLayerOpts) {
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const markerByUicRef = useRef<Map<string, L.Marker>>(new Map());
   useEffect(() => {
     if (!map) return;
     const layer = L.layerGroup().addTo(map);
@@ -90,9 +105,11 @@ export function useSwdLayer({ map, wells, visible = true }: UseSwdLayerOpts) {
     const layer = layerRef.current;
     if (!layer) return;
     layer.clearLayers();
+    markerByUicRef.current.clear();
     if (!visible) return;
     wells.forEach((w) => {
       if (w.latitude == null || w.longitude == null) return;
+      const isFocused = focusedWell?.uic === w.uic_number;
       const { size, html } = wellMarkerSvg({ intensity: w.cumulative_bbl });
       const icon = L.divIcon({
         className: "",
@@ -100,8 +117,14 @@ export function useSwdLayer({ map, wells, visible = true }: UseSwdLayerOpts) {
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
-      const marker = L.marker([w.latitude, w.longitude], { icon }).addTo(layer);
-      const lastDate = w.last_report_date ? w.last_report_date.split("T")[0] : "—";
+      const marker = L.marker([w.latitude, w.longitude], {
+        icon,
+        bubblingMouseEvents: false,
+      }).addTo(layer);
+      markerByUicRef.current.set(w.uic_number, marker);
+      const lastDate = w.last_report_date
+        ? w.last_report_date.split("T")[0]
+        : "—";
       const popup = `<div style="width:240px; padding:0; color:var(--color-fg);">
         <div style="padding:10px 14px; background:color-mix(in oklch, var(--color-swd) 15%, transparent); border-bottom:1px solid var(--color-border);">
           <div style="font-size:9px; color:var(--color-swd); text-transform:uppercase; letter-spacing:.12em; font-weight:800; margin-bottom:2px;">SWD Well</div>
@@ -122,21 +145,76 @@ export function useSwdLayer({ map, wells, visible = true }: UseSwdLayerOpts) {
           </div>
         </div>
       </div>`;
-      marker.bindPopup(popup, { className: "core-tip", offset: [0, -size / 2 - 4], closeButton: false, autoPan: false });
+      marker.bindPopup(popup, {
+        className: "core-tip",
+        offset: [0, -size / 2 - 4],
+        closeButton: false,
+        autoPan: false,
+      });
       marker.on("mouseover", () => marker.openPopup());
-      marker.on("mouseout", () => marker.closePopup());
+      marker.on("mouseout", () => {
+        if (isFocused) return;
+        marker.closePopup();
+        window.dispatchEvent(new CustomEvent(RESTORE_FOCUSED_CONTEXT_POPUP));
+      });
+      marker.on("click", (event) => {
+        if (event.originalEvent) {
+          L.DomEvent.stopPropagation(event.originalEvent);
+        }
+        marker.openPopup();
+        onWellClick?.(w);
+      });
     });
-  }, [wells, visible]);
+  }, [wells, visible, focusedWell?.uic, onWellClick]);
+
+  useEffect(() => {
+    if (!map || !visible || !focusedWell) return;
+    const marker = markerByUicRef.current.get(focusedWell.uic);
+    if (!marker) return;
+
+    const latLng = marker.getLatLng();
+    map.flyTo(latLng, Math.max(map.getZoom(), 13), { duration: 0.65 });
+    const popupTimer = window.setTimeout(() => {
+      marker.openPopup();
+    }, 350);
+
+    return () => window.clearTimeout(popupTimer);
+  }, [map, visible, focusedWell?.uic, focusedWell?.requestId]);
+
+  useEffect(() => {
+    if (!visible || !focusedWell) return;
+
+    const restoreFocusedPopup = () => {
+      markerByUicRef.current.get(focusedWell.uic)?.openPopup();
+    };
+
+    window.addEventListener(RESTORE_FOCUSED_CONTEXT_POPUP, restoreFocusedPopup);
+    return () => {
+      window.removeEventListener(
+        RESTORE_FOCUSED_CONTEXT_POPUP,
+        restoreFocusedPopup,
+      );
+    };
+  }, [visible, focusedWell?.uic]);
 }
 
 export interface UseFracLayerOpts {
   map: LMap | null;
   jobs: NearbyFracJob[];
   visible?: boolean;
+  focusedFracJob?: { id: string; requestId: number } | null;
+  onJobClick?: (job: NearbyFracJob) => void;
 }
 
-export function useFracLayer({ map, jobs, visible = true }: UseFracLayerOpts) {
+export function useFracLayer({
+  map,
+  jobs,
+  visible = true,
+  focusedFracJob,
+  onJobClick,
+}: UseFracLayerOpts) {
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const markerByJobRef = useRef<Map<string, L.Marker>>(new Map());
   useEffect(() => {
     if (!map) return;
     const layer = L.layerGroup().addTo(map);
@@ -151,9 +229,12 @@ export function useFracLayer({ map, jobs, visible = true }: UseFracLayerOpts) {
     const layer = layerRef.current;
     if (!layer) return;
     layer.clearLayers();
+    markerByJobRef.current.clear();
     if (!visible) return;
     jobs.forEach((j) => {
       if (j.latitude == null || j.longitude == null) return;
+      const key = fracJobKey(j);
+      const isFocused = focusedFracJob?.id === key;
       const { size, html } = fracMarkerSvg({ intensity: j.total_water_volume });
       const icon = L.divIcon({
         className: "",
@@ -161,7 +242,11 @@ export function useFracLayer({ map, jobs, visible = true }: UseFracLayerOpts) {
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
-      const marker = L.marker([j.latitude, j.longitude], { icon }).addTo(layer);
+      const marker = L.marker([j.latitude, j.longitude], {
+        icon,
+        bubblingMouseEvents: false,
+      }).addTo(layer);
+      markerByJobRef.current.set(key, marker);
       const start = j.job_start_date ?? "—";
       const end = j.job_end_date ?? "—";
       const popup = `<div style="width:240px; padding:0; color:var(--color-fg);">
@@ -186,21 +271,76 @@ export function useFracLayer({ map, jobs, visible = true }: UseFracLayerOpts) {
           </div>
         </div>
       </div>`;
-      marker.bindPopup(popup, { className: "core-tip", offset: [0, -size / 2 - 4], closeButton: false, autoPan: false });
+      marker.bindPopup(popup, {
+        className: "core-tip",
+        offset: [0, -size / 2 - 4],
+        closeButton: false,
+        autoPan: false,
+      });
       marker.on("mouseover", () => marker.openPopup());
-      marker.on("mouseout", () => marker.closePopup());
+      marker.on("mouseout", () => {
+        if (isFocused) return;
+        marker.closePopup();
+        window.dispatchEvent(new CustomEvent(RESTORE_FOCUSED_CONTEXT_POPUP));
+      });
+      marker.on("click", (event) => {
+        if (event.originalEvent) {
+          L.DomEvent.stopPropagation(event.originalEvent);
+        }
+        marker.openPopup();
+        onJobClick?.(j);
+      });
     });
-  }, [jobs, visible]);
+  }, [jobs, visible, focusedFracJob?.id, onJobClick]);
+
+  useEffect(() => {
+    if (!map || !visible || !focusedFracJob) return;
+    const marker = markerByJobRef.current.get(focusedFracJob.id);
+    if (!marker) return;
+
+    const latLng = marker.getLatLng();
+    map.flyTo(latLng, Math.max(map.getZoom(), 13), { duration: 0.65 });
+    const popupTimer = window.setTimeout(() => {
+      marker.openPopup();
+    }, 350);
+
+    return () => window.clearTimeout(popupTimer);
+  }, [map, visible, focusedFracJob?.id, focusedFracJob?.requestId]);
+
+  useEffect(() => {
+    if (!visible || !focusedFracJob) return;
+
+    const restoreFocusedPopup = () => {
+      markerByJobRef.current.get(focusedFracJob.id)?.openPopup();
+    };
+
+    window.addEventListener(RESTORE_FOCUSED_CONTEXT_POPUP, restoreFocusedPopup);
+    return () => {
+      window.removeEventListener(
+        RESTORE_FOCUSED_CONTEXT_POPUP,
+        restoreFocusedPopup,
+      );
+    };
+  }, [visible, focusedFracJob?.id]);
 }
 
 export interface UseStationsLayerOpts {
   map: LMap | null;
   stations: NearbyStation[];
   visible?: boolean;
+  focusedStation?: { id: string; requestId: number } | null;
+  onStationClick?: (station: NearbyStation) => void;
 }
 
-export function useStationsLayer({ map, stations, visible = true }: UseStationsLayerOpts) {
+export function useStationsLayer({
+  map,
+  stations,
+  visible = true,
+  focusedStation,
+  onStationClick,
+}: UseStationsLayerOpts) {
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const markerByStationRef = useRef<Map<string, L.Marker>>(new Map());
   useEffect(() => {
     if (!map) return;
     const layer = L.layerGroup().addTo(map);
@@ -215,9 +355,11 @@ export function useStationsLayer({ map, stations, visible = true }: UseStationsL
     const layer = layerRef.current;
     if (!layer) return;
     layer.clearLayers();
+    markerByStationRef.current.clear();
     if (!visible) return;
     stations.forEach((s) => {
       if (s.latitude == null || s.longitude == null) return;
+      const isFocused = focusedStation?.id === s.network_station;
       const active = s.end_time == null;
       const { size, html } = stationMarkerSvg({ active });
       const icon = L.divIcon({
@@ -226,7 +368,11 @@ export function useStationsLayer({ map, stations, visible = true }: UseStationsL
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
-      const marker = L.marker([s.latitude, s.longitude], { icon }).addTo(layer);
+      const marker = L.marker([s.latitude, s.longitude], {
+        icon,
+        bubblingMouseEvents: false,
+      }).addTo(layer);
+      markerByStationRef.current.set(s.network_station, marker);
       const popup = `<div style="width:200px;padding:10px 13px;">
         <div style="font-size:9px;color:var(--color-muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:2px;">Seismic Station</div>
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--color-fg);">${s.network_station}</div>
@@ -235,11 +381,57 @@ export function useStationsLayer({ map, stations, visible = true }: UseStationsL
           <div>${s.distance_km.toFixed(1)} km away${active ? "" : " · decommissioned"}</div>
         </div>
       </div>`;
-      marker.bindPopup(popup, { className: "core-tip", offset: [0, -size / 2 - 2], closeButton: false, autoPan: false });
+      marker.bindPopup(popup, {
+        className: "core-tip",
+        offset: [0, -size / 2 - 2],
+        closeButton: false,
+        autoPan: false,
+      });
       marker.on("mouseover", () => marker.openPopup());
-      marker.on("mouseout", () => marker.closePopup());
+      marker.on("mouseout", () => {
+        if (isFocused) return;
+        marker.closePopup();
+        window.dispatchEvent(new CustomEvent(RESTORE_FOCUSED_CONTEXT_POPUP));
+      });
+      marker.on("click", (event) => {
+        if (event.originalEvent) {
+          L.DomEvent.stopPropagation(event.originalEvent);
+        }
+        marker.openPopup();
+        onStationClick?.(s);
+      });
     });
-  }, [stations, visible]);
+  }, [stations, visible, focusedStation?.id, onStationClick]);
+
+  useEffect(() => {
+    if (!map || !visible || !focusedStation) return;
+    const marker = markerByStationRef.current.get(focusedStation.id);
+    if (!marker) return;
+
+    const latLng = marker.getLatLng();
+    map.flyTo(latLng, Math.max(map.getZoom(), 13), { duration: 0.65 });
+    const popupTimer = window.setTimeout(() => {
+      marker.openPopup();
+    }, 350);
+
+    return () => window.clearTimeout(popupTimer);
+  }, [map, visible, focusedStation?.id, focusedStation?.requestId]);
+
+  useEffect(() => {
+    if (!visible || !focusedStation) return;
+
+    const restoreFocusedPopup = () => {
+      markerByStationRef.current.get(focusedStation.id)?.openPopup();
+    };
+
+    window.addEventListener(RESTORE_FOCUSED_CONTEXT_POPUP, restoreFocusedPopup);
+    return () => {
+      window.removeEventListener(
+        RESTORE_FOCUSED_CONTEXT_POPUP,
+        restoreFocusedPopup,
+      );
+    };
+  }, [visible, focusedStation?.id]);
 }
 
 export interface UseRadiusRingsOpts {
@@ -287,12 +479,25 @@ export function useRadiusRings({
         fill: false,
         opacity: 0.6,
       })
-        .bindTooltip(`${label}: ${km} km`, { permanent: false, direction: "top" })
+        .bindTooltip(`${label}: ${km} km`, {
+          permanent: false,
+          direction: "top",
+        })
         .addTo(layer);
     };
 
     if (show.swd && swdRadiusKm) ring(swdRadiusKm, "#ea580c", "SWD radius");
     if (show.frac && fracRadiusKm) ring(fracRadiusKm, "#9333ea", "Frac radius");
-    if (show.station && stationRadiusKm) ring(stationRadiusKm, "#2563eb", "Station radius");
-  }, [centerLat, centerLon, swdRadiusKm, fracRadiusKm, stationRadiusKm, show.swd, show.frac, show.station]);
+    if (show.station && stationRadiusKm)
+      ring(stationRadiusKm, "#2563eb", "Station radius");
+  }, [
+    centerLat,
+    centerLon,
+    swdRadiusKm,
+    fracRadiusKm,
+    stationRadiusKm,
+    show.swd,
+    show.frac,
+    show.station,
+  ]);
 }

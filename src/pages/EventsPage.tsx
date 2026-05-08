@@ -37,9 +37,10 @@ export function EventsPage() {
     navigate(`/events/${id}`);
   }
 
-  const filteredEvents = events.filter((ev) =>
-    ev.event_id.toLowerCase().includes(localSearch.toLowerCase()) ||
-    eventLocationLabel(ev).toLowerCase().includes(localSearch.toLowerCase())
+  const filteredEvents = events.filter(
+    (ev) =>
+      ev.event_id.toLowerCase().includes(localSearch.toLowerCase()) ||
+      eventLocationLabel(ev).toLowerCase().includes(localSearch.toLowerCase()),
   );
 
   return (
@@ -54,24 +55,30 @@ export function EventsPage() {
 
         {/* Floating Headers */}
         <div className="pointer-events-none absolute left-8 top-8 z-20">
-          <h1 className={`font-display text-3xl font-black tracking-tight drop-shadow-sm ${
-            theme === 'dark' ? 'text-white' : 'text-slate-900'
-          }`}>
+          <h1
+            className={`font-display text-3xl font-black tracking-tight drop-shadow-sm ${
+              theme === "dark" ? "text-white" : "text-slate-900"
+            }`}
+          >
             Seismic Events
           </h1>
-          <p className={`text-[10px] font-black uppercase tracking-[.25em] mt-1.5 ${
-            theme === 'dark' ? 'text-neutral-400' : 'text-slate-500'
-          }`}>
+          <p
+            className={`text-[10px] font-black uppercase tracking-[.25em] mt-1.5 ${
+              theme === "dark" ? "text-neutral-400" : "text-slate-500"
+            }`}
+          >
             Delaware Basin Catalog
           </p>
         </div>
 
         <div className="absolute left-8 bottom-8 z-20 w-[300px]">
-          <div className={`rounded-2xl shadow-2xl border overflow-hidden backdrop-blur-xl transition-colors duration-500 ${
-            theme === 'dark' 
-              ? 'bg-neutral-900/80 border-white/10' 
-              : 'bg-slate-50/85 border-slate-200'
-          }`}>
+          <div
+            className={`rounded-2xl shadow-2xl border overflow-hidden backdrop-blur-xl transition-colors duration-500 ${
+              theme === "dark"
+                ? "bg-neutral-900/80 border-white/10"
+                : "bg-slate-50/85 border-slate-200"
+            }`}
+          >
             <EventFiltersBar
               filters={filters}
               onChange={handleFilterChange}
@@ -89,17 +96,21 @@ export function EventsPage() {
         <div className="flex flex-col gap-4 border-b border-[var(--color-border)]/50 bg-[var(--color-card)] px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[var(--color-fg)]">Latest Activity</h3>
+              <h3 className="text-sm font-bold text-[var(--color-fg)]">
+                Latest Activity
+              </h3>
               <p className="text-[10px] font-medium text-[var(--color-muted)] mt-0.5 uppercase tracking-wider">
                 {total.toLocaleString()} catalog events
               </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-status-running animate-pulse" />
-              <span className="text-[10px] font-bold text-[var(--color-muted)] uppercase tracking-tighter">Live Monitor</span>
+              <span className="text-[10px] font-bold text-[var(--color-muted)] uppercase tracking-tighter">
+                Live Monitor
+              </span>
             </div>
           </div>
-          
+
           <div className="relative">
             <input
               type="text"
@@ -114,7 +125,10 @@ export function EventsPage() {
         <div className="flex-1 overflow-y-auto bg-[var(--color-card-elevated)]/50">
           {query.isError ? (
             <div className="p-8">
-              <ErrorState title="Failed to load events" description={String(query.error)} />
+              <ErrorState
+                title="Failed to load events"
+                description={String(query.error)}
+              />
             </div>
           ) : query.isLoading ? (
             <div className="space-y-4 p-6">
@@ -145,6 +159,3 @@ export function EventsPage() {
     </div>
   );
 }
-
-
-

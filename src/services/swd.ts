@@ -14,8 +14,12 @@ export interface MonitoringFilters {
 
 export const swdService = {
   listWells: (filters: WellFilters = {}) =>
-    request<Paginated<SwdWell>>(`/swd/wells${qs(filters as Record<string, unknown>)}`),
+    request<Paginated<SwdWell>>(
+      `/swd/wells${qs(filters as Record<string, unknown>)}`,
+    ),
 
   getMonitoring: (filters: MonitoringFilters) =>
-    request<Paginated<H10Record>>(`/swd/monitoring${qs(filters as unknown as Record<string, unknown>)}`),
+    request<Paginated<H10Record>>(
+      `/swd/monitoring${qs(filters as unknown as Record<string, unknown>)}`,
+    ),
 };

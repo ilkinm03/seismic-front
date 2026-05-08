@@ -55,7 +55,9 @@ export function Sidebar() {
 
       <div className="p-6 border-t border-[var(--color-border)]/50">
         <div className="rounded-xl bg-status-running/5 p-4 border border-status-running/10">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-status-running/80 mb-1">Status</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-status-running/80 mb-1">
+            Status
+          </p>
           <p className="text-[11px] font-medium text-[var(--color-muted)]">
             Phase 1 Engine Active
           </p>
@@ -64,5 +66,3 @@ export function Sidebar() {
     </aside>
   );
 }
-
-

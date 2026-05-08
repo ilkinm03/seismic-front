@@ -9,7 +9,13 @@ export interface SwitchProps {
   className?: string;
 }
 
-export function Switch({ checked, onCheckedChange, disabled, ariaLabel, className }: SwitchProps) {
+export function Switch({
+  checked,
+  onCheckedChange,
+  disabled,
+  ariaLabel,
+  className,
+}: SwitchProps) {
   return (
     <RSwitch.Root
       checked={checked}

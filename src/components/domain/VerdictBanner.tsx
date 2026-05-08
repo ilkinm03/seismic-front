@@ -20,7 +20,8 @@ function pickTheme(driver: string, confidence: number): VerdictTheme {
         blurb: "SWD weight dominant — high confidence.",
         color: "var(--color-status-failed)",
         bg: "color-mix(in oklch, var(--color-status-failed) 12%, var(--color-card))",
-        border: "color-mix(in oklch, var(--color-status-failed) 50%, transparent)",
+        border:
+          "color-mix(in oklch, var(--color-status-failed) 50%, transparent)",
         ring: "color-mix(in oklch, var(--color-status-failed) 35%, transparent)",
         icon: "■",
       };
@@ -29,7 +30,8 @@ function pickTheme(driver: string, confidence: number): VerdictTheme {
       blurb: "SWD dominant but frac signals present.",
       color: "var(--color-status-pending)",
       bg: "color-mix(in oklch, var(--color-status-pending) 12%, var(--color-card))",
-      border: "color-mix(in oklch, var(--color-status-pending) 45%, transparent)",
+      border:
+        "color-mix(in oklch, var(--color-status-pending) 45%, transparent)",
       ring: "color-mix(in oklch, var(--color-status-pending) 30%, transparent)",
       icon: "●",
     };
@@ -50,7 +52,8 @@ function pickTheme(driver: string, confidence: number): VerdictTheme {
       blurb: "Frac dominant but SWD signals present.",
       color: "var(--color-status-pending)",
       bg: "color-mix(in oklch, var(--color-status-pending) 12%, var(--color-card))",
-      border: "color-mix(in oklch, var(--color-status-pending) 45%, transparent)",
+      border:
+        "color-mix(in oklch, var(--color-status-pending) 45%, transparent)",
       ring: "color-mix(in oklch, var(--color-status-pending) 30%, transparent)",
       icon: "●",
     };
@@ -74,12 +77,19 @@ export function VerdictBanner({ result }: { result: AttributionResult }) {
         "rounded-[var(--radius-card)] border p-5",
         "animate-[verdict-rise_0.45s_ease-out]",
       )}
-      style={{ background: theme.bg, borderColor: theme.border, boxShadow: `0 0 0 4px ${theme.ring}` }}
+      style={{
+        background: theme.bg,
+        borderColor: theme.border,
+        boxShadow: `0 0 0 4px ${theme.ring}`,
+      }}
     >
       <div className="flex items-start gap-4">
         <div
           className="flex size-11 shrink-0 items-center justify-center rounded-xl text-2xl font-bold"
-          style={{ color: theme.color, background: `color-mix(in oklch, ${theme.color} 14%, transparent)` }}
+          style={{
+            color: theme.color,
+            background: `color-mix(in oklch, ${theme.color} 14%, transparent)`,
+          }}
         >
           {theme.icon}
         </div>
@@ -87,16 +97,24 @@ export function VerdictBanner({ result }: { result: AttributionResult }) {
           <div className="text-[10px] font-semibold uppercase tracking-[.12em] text-[var(--color-muted)]">
             Verdict · engine {result.engine}
           </div>
-          <h2 className="mt-1 text-lg font-semibold leading-snug" style={{ color: theme.color }}>
+          <h2
+            className="mt-1 text-lg font-semibold leading-snug"
+            style={{ color: theme.color }}
+          >
             {theme.label}
           </h2>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">{theme.blurb}</p>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            {theme.blurb}
+          </p>
         </div>
         <div className="text-right">
           <div className="text-[10px] font-semibold uppercase tracking-[.12em] text-[var(--color-muted)]">
             Confidence
           </div>
-          <div className="font-mono text-3xl font-bold" style={{ color: theme.color }}>
+          <div
+            className="font-mono text-3xl font-bold"
+            style={{ color: theme.color }}
+          >
             {pctFmt(result.confidence)}
           </div>
         </div>

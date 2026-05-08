@@ -14,7 +14,8 @@ export const qk = {
   health: () => ["health"] as const,
   sync: {
     all: () => ["sync"] as const,
-    history: (filters: SyncHistoryParams = {}) => ["sync", "history", filters] as const,
+    history: (filters: SyncHistoryParams = {}) =>
+      ["sync", "history", filters] as const,
     fracStatus: () => ["sync", "fracStatus"] as const,
   },
   events: {
@@ -24,7 +25,8 @@ export const qk = {
   wells: {
     all: () => ["wells"] as const,
     list: (filters: WellFilters) => ["wells", "list", filters] as const,
-    monitoring: (filters: MonitoringFilters) => ["wells", "monitoring", filters] as const,
+    monitoring: (filters: MonitoringFilters) =>
+      ["wells", "monitoring", filters] as const,
   },
   frac: {
     all: () => ["frac"] as const,

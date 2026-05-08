@@ -18,9 +18,11 @@ function popupHtml(ev: SeismicEvent): string {
   const meta = magnitudeMeta(ev.magnitude);
   const color = magHexFallback(ev.magnitude);
   const label = meta.label;
-  const date = ev.event_date ? ev.event_date.replace("T", " ").slice(0, 16) : "—";
+  const date = ev.event_date
+    ? ev.event_date.replace("T", " ").slice(0, 16)
+    : "—";
   const where = eventLocationLabel(ev);
-  
+
   return `<div style="width:260px; padding:0; border-radius:16px; overflow:hidden; background:rgba(23, 23, 23, 0.85); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);">
     <div style="padding:14px 16px 12px; background:linear-gradient(to bottom, rgba(255,255,255,0.03), transparent); border-bottom:1px solid rgba(255,255,255,0.08);">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
@@ -42,13 +44,19 @@ function popupHtml(ev: SeismicEvent): string {
       </div>
       <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:8px 10px;">
         <div style="font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:.12em; font-weight:800; margin-bottom:4px;">Source</div>
-        <div style="font-size:13px; font-weight:800; color:${ev.source === 'usgs' ? '#3b82f6' : '#10b981'}; font-family:var(--font-mono);">${(ev.source ?? "—").toUpperCase()}</div>
+        <div style="font-size:13px; font-weight:800; color:${ev.source === "usgs" ? "#3b82f6" : "#10b981"}; font-family:var(--font-mono);">${(ev.source ?? "—").toUpperCase()}</div>
       </div>
     </div>
   </div>`;
 }
 
-export function useEventLayer({ map, events, selectedId, onSelect, flyToSelected = true }: UseEventLayerOpts) {
+export function useEventLayer({
+  map,
+  events,
+  selectedId,
+  onSelect,
+  flyToSelected = true,
+}: UseEventLayerOpts) {
   const layerRef = useRef<L.LayerGroup | null>(null);
 
   // Lazy create the layer
@@ -101,7 +109,9 @@ export function useEventLayer({ map, events, selectedId, onSelect, flyToSelected
     if (flyToSelected && selectedId) {
       const sel = events.find((e) => e.event_id === selectedId);
       if (sel && sel.latitude != null && sel.longitude != null) {
-        map.flyTo([sel.latitude, sel.longitude], Math.max(map.getZoom(), 9), { duration: 0.7 });
+        map.flyTo([sel.latitude, sel.longitude], Math.max(map.getZoom(), 9), {
+          duration: 0.7,
+        });
       }
     }
   }, [map, events, selectedId, onSelect, flyToSelected]);

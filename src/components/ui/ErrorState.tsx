@@ -23,14 +23,24 @@ export function ErrorState({
       )}
     >
       <div className="flex size-9 items-center justify-center rounded-full bg-[color-mix(in_oklch,var(--color-status-failed)_15%,var(--color-card))] text-[var(--color-status-failed)]">
-        <svg viewBox="0 0 20 20" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <svg
+          viewBox="0 0 20 20"
+          className="size-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        >
           <circle cx="10" cy="10" r="8" />
           <path d="M10 6v5M10 14h.01" strokeLinecap="round" />
         </svg>
       </div>
       <div>
-        <h3 className="text-sm font-semibold text-[var(--color-fg)]">{title}</h3>
-        <p className="mt-1 max-w-md text-xs leading-relaxed text-[var(--color-muted)]">{description}</p>
+        <h3 className="text-sm font-semibold text-[var(--color-fg)]">
+          {title}
+        </h3>
+        <p className="mt-1 max-w-md text-xs leading-relaxed text-[var(--color-muted)]">
+          {description}
+        </p>
       </div>
       {onRetry ? (
         <Button size="sm" variant="outline" onClick={onRetry}>

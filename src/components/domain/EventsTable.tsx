@@ -38,7 +38,9 @@ export function EventsTable({
   }
 
   if (!events.length) {
-    return <EmptyState title="No seismic events found" description={emptyHint} />;
+    return (
+      <EmptyState title="No seismic events found" description={emptyHint} />
+    );
   }
 
   return (
@@ -46,7 +48,7 @@ export function EventsTable({
       {events.map((ev) => {
         const isSelected = ev.event_id === selectedId;
         const location = eventLocationLabel(ev);
-        
+
         return (
           <button
             key={ev.event_id}
@@ -55,7 +57,7 @@ export function EventsTable({
               "flex w-full items-center gap-4 px-6 py-4 text-left transition-all duration-200 hover:bg-[var(--color-fg)]/5",
               isSelected
                 ? "bg-[var(--color-accent)]/10 ring-1 ring-inset ring-[var(--color-accent)]/30"
-                : "bg-transparent"
+                : "bg-transparent",
             )}
           >
             {/* Left: Magnitude Pill */}

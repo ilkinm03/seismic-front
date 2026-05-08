@@ -27,7 +27,17 @@ export function ScoreBar({ result }: { result: AttributionResult }) {
   );
 }
 
-function Bar({ label, score, pct, color }: { label: string; score: number; pct: number; color: string }) {
+function Bar({
+  label,
+  score,
+  pct,
+  color,
+}: {
+  label: string;
+  score: number;
+  pct: number;
+  color: string;
+}) {
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between text-xs">
@@ -36,7 +46,9 @@ function Bar({ label, score, pct, color }: { label: string; score: number; pct: 
         </span>
         <span className="font-mono">
           <span className="text-[var(--color-fg)]">{pct.toFixed(0)}%</span>
-          <span className="ml-2 text-[var(--color-muted)]">{numberFmt(score, { decimals: 1 })}</span>
+          <span className="ml-2 text-[var(--color-muted)]">
+            {numberFmt(score, { decimals: 1 })}
+          </span>
         </span>
       </div>
       <div className="h-2.5 overflow-hidden rounded-full bg-[var(--color-border)]">

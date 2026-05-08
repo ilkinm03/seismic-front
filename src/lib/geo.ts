@@ -12,7 +12,10 @@ export const DELAWARE_BASIN = {
 const EARTH_RADIUS_KM = 6371;
 
 /** Great-circle distance in km. */
-export function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+export function haversineKm(
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number },
+): number {
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
   const dLon = toRad(b.lon - a.lon);

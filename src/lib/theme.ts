@@ -14,7 +14,8 @@ function readSavedTheme(): Theme | null {
 }
 
 function systemTheme(): Theme {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
+  return typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
@@ -29,7 +30,11 @@ export function applyTheme(theme: Theme) {
   root.style.colorScheme = theme;
 }
 
-export function useTheme(): { theme: Theme; toggle: () => void; set: (t: Theme) => void } {
+export function useTheme(): {
+  theme: Theme;
+  toggle: () => void;
+  set: (t: Theme) => void;
+} {
   const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
 
   useEffect(() => {

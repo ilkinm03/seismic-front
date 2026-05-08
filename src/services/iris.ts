@@ -10,5 +10,7 @@ export interface StationFilters {
 
 export const irisService = {
   listStations: (filters: StationFilters = {}) =>
-    request<Paginated<IrisStation>>(`/seismic/iris/stations${qs(filters as Record<string, unknown>)}`),
+    request<Paginated<IrisStation>>(
+      `/seismic/iris/stations${qs(filters as Record<string, unknown>)}`,
+    ),
 };

@@ -4,7 +4,8 @@ import { ApiError, NetworkError } from "@/lib/http";
 
 function describe(error: unknown): string {
   if (error instanceof ApiError) return error.detail;
-  if (error instanceof NetworkError) return "Backend unreachable — is python main.py running?";
+  if (error instanceof NetworkError)
+    return "Backend unreachable — is python main.py running?";
   if (error instanceof Error) return error.message;
   return "Unknown error";
 }
@@ -16,7 +17,11 @@ export function createQueryClient(): QueryClient {
         staleTime: 30_000,
         gcTime: 5 * 60_000,
         retry: (count, error) => {
-          if (error instanceof ApiError && (error.status === 404 || error.status === 400)) return false;
+          if (
+            error instanceof ApiError &&
+            (error.status === 404 || error.status === 400)
+          )
+            return false;
           return count < 2;
         },
         refetchOnWindowFocus: false,
@@ -33,7 +38,8 @@ export function createQueryClient(): QueryClient {
     }),
     mutationCache: new MutationCache({
       onError(error, _vars, _ctx, mutation) {
-        if (mutation.meta && (mutation.meta as { silent?: boolean }).silent) return;
+        if (mutation.meta && (mutation.meta as { silent?: boolean }).silent)
+          return;
         toast.error(describe(error));
       },
     }),

@@ -3,13 +3,22 @@ import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
 /** Numeric formatters memoized at module scope. */
 const intFmt = new Intl.NumberFormat("en-US");
 const floatFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
-const compactFmt = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+const compactFmt = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
-export const numberFmt = (n: number | null | undefined, opts?: { compact?: boolean; decimals?: number }): string => {
+export const numberFmt = (
+  n: number | null | undefined,
+  opts?: { compact?: boolean; decimals?: number },
+): string => {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   if (opts?.compact) return compactFmt.format(n);
   if (opts?.decimals !== undefined) {
-    return new Intl.NumberFormat("en-US", { maximumFractionDigits: opts.decimals, minimumFractionDigits: opts.decimals }).format(n);
+    return new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: opts.decimals,
+      minimumFractionDigits: opts.decimals,
+    }).format(n);
   }
   return Number.isInteger(n) ? intFmt.format(n) : floatFmt.format(n);
 };
@@ -25,7 +34,10 @@ function safeParse(iso: string | null | undefined): Date | null {
   }
 }
 
-export const dateFmt = (iso: string | null | undefined, pattern = "yyyy-MM-dd"): string => {
+export const dateFmt = (
+  iso: string | null | undefined,
+  pattern = "yyyy-MM-dd",
+): string => {
   const d = safeParse(iso);
   return d ? format(d, pattern) : "—";
 };
@@ -58,7 +70,8 @@ export const eventLocationLabel = (ev: {
   county_name?: string | null;
   region_name?: string | null;
   place?: string | null;
-}): string => ev.county_name?.trim() || ev.place?.trim() || ev.region_name?.trim() || "—";
+}): string =>
+  ev.county_name?.trim() || ev.place?.trim() || ev.region_name?.trim() || "—";
 
 /** Days → "X yıl" / "X ay" / "X gün" — used in slider helper text. */
 export const humanDays = (days: number): string => {
@@ -73,10 +86,12 @@ export const humanDays = (days: number): string => {
   return `${days} days`;
 };
 
-
-export const psiFmt = (n: number | null | undefined) => (n == null ? "—" : `${numberFmt(n, { decimals: 0 })} psi`);
-export const bblFmt = (n: number | null | undefined) => (n == null ? "—" : `${numberFmt(n, { decimals: 0 })} bbl`);
-export const galFmt = (n: number | null | undefined) => (n == null ? "—" : `${numberFmt(n, { decimals: 0 })} gal`);
+export const psiFmt = (n: number | null | undefined) =>
+  n == null ? "—" : `${numberFmt(n, { decimals: 0 })} psi`;
+export const bblFmt = (n: number | null | undefined) =>
+  n == null ? "—" : `${numberFmt(n, { decimals: 0 })} bbl`;
+export const galFmt = (n: number | null | undefined) =>
+  n == null ? "—" : `${numberFmt(n, { decimals: 0 })} gal`;
 export const kmFmt = (n: number | null | undefined) =>
   n == null ? "—" : `${numberFmt(n, { decimals: 1 })} km`;
 export const ftFmt = (n: number | null | undefined) =>

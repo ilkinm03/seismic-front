@@ -1,5 +1,9 @@
 import { qs, request } from "@/lib/http";
-import type { AnalysisParams, EventAnalysisResponse, EventContext } from "@/types/api";
+import type {
+  AnalysisParams,
+  EventAnalysisResponse,
+  EventContext,
+} from "@/types/api";
 
 export const analysisService = {
   getContext: (eventId: string, params: Partial<AnalysisParams> = {}) =>

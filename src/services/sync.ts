@@ -16,7 +16,9 @@ export interface SyncHistoryParams {
 
 export const syncService = {
   history: (params: SyncHistoryParams = {}) =>
-    request<SyncHistoryResponse>(`/sync/history${qs(params as Record<string, unknown>)}`),
+    request<SyncHistoryResponse>(
+      `/sync/history${qs(params as Record<string, unknown>)}`,
+    ),
 
   fracStatus: () => request<FracSyncStatus>(`/sync/status`),
 
@@ -36,7 +38,9 @@ export const syncService = {
     ),
 
   triggerIRIS: () =>
-    request<SyncFetchSummary>(`/seismic/iris/stations/fetch`, { method: "POST" }),
+    request<SyncFetchSummary>(`/seismic/iris/stations/fetch`, {
+      method: "POST",
+    }),
 
   triggerUIC: () =>
     request<SyncFetchSummary>(`/swd/uic/fetch`, { method: "POST" }),
