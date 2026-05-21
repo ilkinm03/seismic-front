@@ -23,11 +23,32 @@ export const numberFmt = (
   return Number.isInteger(n) ? intFmt.format(n) : floatFmt.format(n);
 };
 
+const hasTime = (value: string): boolean => /[tT ]\d{2}:\d{2}/.test(value);
+const hasTimeZone = (value: string): boolean =>
+  /(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(value);
+
+/**
+ * Backend datetime values are UTC. Some responses omit the trailing `Z`, so
+ * add it before parsing or browsers will treat the value as local time.
+ */
+const normalizeIso = (iso: string): string =>
+  hasTime(iso) && !hasTimeZone(iso) ? `${iso}Z` : iso;
+
+const localTimeZoneLabel = (date: Date): string => {
+  const zone = Intl.DateTimeFormat(undefined, {
+    timeZoneName: "short",
+  })
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")?.value;
+
+  return zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+};
+
 /** Convert raw ISO string from backend into a Date. Returns null on parse failure. */
 function safeParse(iso: string | null | undefined): Date | null {
   if (!iso) return null;
   try {
-    const d = parseISO(iso);
+    const d = parseISO(normalizeIso(iso));
     return Number.isNaN(d.getTime()) ? null : d;
   } catch {
     return null;
@@ -42,9 +63,14 @@ export const dateFmt = (
   return d ? format(d, pattern) : "—";
 };
 
-export const dateTimeFmt = (iso: string | null | undefined): string => {
+export const dateTimeFmt = (
+  iso: string | null | undefined,
+  opts?: { timeZone?: boolean },
+): string => {
   const d = safeParse(iso);
-  return d ? `${format(d, "yyyy-MM-dd HH:mm")} UTC` : "—";
+  if (!d) return "—";
+  const value = format(d, "yyyy-MM-dd HH:mm");
+  return opts?.timeZone === false ? value : `${value} ${localTimeZoneLabel(d)}`;
 };
 
 export const relativeTime = (iso: string | null | undefined): string => {

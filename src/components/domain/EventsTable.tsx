@@ -85,7 +85,7 @@ export function EventsTable({
             {/* Right: Meta */}
             <div className="flex flex-col items-end gap-1.5 text-right">
               <div className="font-mono text-[10px] font-medium text-[var(--color-muted)]">
-                {dateTimeFmt(ev.event_date).replace(" UTC", "")}
+                {dateTimeFmt(ev.event_date, { timeZone: false })}
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[10px] text-[var(--color-subtle)]">
