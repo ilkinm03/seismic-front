@@ -55,7 +55,7 @@ export function EventFiltersBar({
         <div
           className={cn(
             "transition-transform duration-200",
-            isCollapsed ? "" : "rotate-180",
+            !isCollapsed ? "" : "rotate-180",
           )}
         >
           <svg
@@ -145,11 +145,11 @@ export function EventFiltersBar({
             </Select>
           </div>
 
-          <Input
+          {/* <Input
             placeholder="Search by Event ID…"
             disabled
             title="Server-side event ID search not implemented"
-          />
+          /> */}
 
           {onReset ? (
             <Button variant="ghost" size="sm" onClick={onReset} fullWidth>
