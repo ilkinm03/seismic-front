@@ -10,6 +10,7 @@ import {
   useSwdLayer,
 } from "@/lib/map/useNearbyLayers";
 import { Switch } from "@/components/ui/Switch";
+import { Spinner } from "@/components/ui/Spinner";
 import type {
   EventContext,
   NearbyFracJob,
@@ -155,7 +156,18 @@ export function ContextMap({
         }}
       />
 
-      {!context && (
+      {loading && (
+        <div className="pointer-events-none absolute inset-0 z-[900] flex items-center justify-center bg-[var(--color-bg)]/40 backdrop-blur-[2px]">
+          <div className="flex items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/95 px-4 py-2.5 shadow-lg backdrop-blur">
+            <Spinner size={14} />
+            <span className="text-xs font-medium text-[var(--color-muted)]">
+              Loading layers…
+            </span>
+          </div>
+        </div>
+      )}
+
+      {!context && !loading && (
         <div className="pointer-events-none absolute inset-0 flex items-end justify-center pb-12 text-xs text-[var(--color-muted)]">
           <span className="rounded-lg border border-dashed border-[var(--color-border-strong)] bg-[var(--color-card)]/90 px-4 py-2 backdrop-blur">
             Load layers via Preview or Run Analysis

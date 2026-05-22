@@ -72,8 +72,13 @@ export function EventsTable({
                   {ev.event_id}
                 </span>
                 {isSelected && (
-                  <span className="rounded-full bg-[var(--color-accent)] px-1.5 py-0.5 text-[8px] font-black uppercase text-white">
-                    Selected
+                  <span className="flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-1.5 py-0.5 text-[8px] font-black uppercase text-white">
+                    <span
+                      className="inline-block animate-spin rounded-full border border-white/40 border-t-white"
+                      style={{ width: 10, height: 10 }}
+                      aria-hidden="true"
+                    />
+                    Loading
                   </span>
                 )}
               </div>
